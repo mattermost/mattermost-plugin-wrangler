@@ -85,7 +85,7 @@ export default class MoveThreadModal extends React.PureComponent<Props, State> {
             selectedTeam: firstTeamID,
             selectedChannel: firstChannelID,
         });
-    }
+    };
 
     private handleTeamSelectChange = async (event: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLSelectElement>) => {
         const teamID = event.target.value;
@@ -101,11 +101,11 @@ export default class MoveThreadModal extends React.PureComponent<Props, State> {
             selectedChannel: firstChannelID,
             channelsInTeam: channels,
         });
-    }
+    };
 
     private handleChannelSelectChange = (event: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLSelectElement>) => {
         this.setState({selectedChannel: event.target.value});
-    }
+    };
 
     private handleOnClick = async (event: React.MouseEvent) => {
         if (event && event.preventDefault) {

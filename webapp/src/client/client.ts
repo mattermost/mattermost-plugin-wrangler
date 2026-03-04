@@ -13,7 +13,7 @@ export default class Client {
             `${this.getAPIV1BaseRoute()}/settings`,
             {method: 'get'},
         );
-    }
+    };
 
     // Helpers
 
@@ -65,5 +65,5 @@ export default class Client {
         } catch (error) {
             console.error(error); //eslint-disable-line no-console
         }
-    }
+    };
 }
