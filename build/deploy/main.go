@@ -3,12 +3,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mholt/archiver/v3"
 	"github.com/pkg/errors"
 )
@@ -24,7 +25,6 @@ func main() {
 	}
 }
 
-// deploy handles deployment of the plugin to a development server.
 func deploy() error {
 	if len(os.Args) < 3 {
 		return errors.New("invalid number of arguments")
@@ -52,9 +52,9 @@ func deploy() error {
 		if adminUsername != "" && adminPassword != "" {
 			client := model.NewAPIv4Client(siteURL)
 			log.Printf("Authenticating as %s against %s.", adminUsername, siteURL)
-			_, resp := client.Login(adminUsername, adminPassword)
-			if resp.Error != nil {
-				return errors.Wrapf(resp.Error, "failed to login as %s", adminUsername)
+			_, _, err := client.Login(context.Background(), adminUsername, adminPassword)
+			if err != nil {
+				return errors.Wrapf(err, "failed to login as %s", adminUsername)
 			}
 
 			return uploadPlugin(client, pluginID, bundlePath)
@@ -73,8 +73,6 @@ func deploy() error {
 	return copyPlugin(pluginID, copyTargetDirectory, bundlePath)
 }
 
-// uploadPlugin attempts to upload and enable a plugin via the Client4 API.
-// It will fail if plugin uploads are disabled.
 func uploadPlugin(client *model.Client4, pluginID, bundlePath string) error {
 	pluginBundle, err := os.Open(bundlePath)
 	if err != nil {
@@ -83,22 +81,20 @@ func uploadPlugin(client *model.Client4, pluginID, bundlePath string) error {
 	defer pluginBundle.Close()
 
 	log.Print("Uploading plugin via API.")
-	_, resp := client.UploadPluginForced(pluginBundle)
-	if resp.Error != nil {
-		return fmt.Errorf("Failed to upload plugin bundle: %s", resp.Error.Error())
+	_, _, err = client.UploadPluginForced(context.Background(), pluginBundle)
+	if err != nil {
+		return fmt.Errorf("failed to upload plugin bundle: %w", err)
 	}
 
 	log.Print("Enabling plugin.")
-	_, resp = client.EnablePlugin(pluginID)
-	if resp.Error != nil {
-		return fmt.Errorf("Failed to enable plugin: %s", resp.Error.Error())
+	_, err = client.EnablePlugin(context.Background(), pluginID)
+	if err != nil {
+		return fmt.Errorf("failed to enable plugin: %w", err)
 	}
 
 	return nil
 }
 
-// copyPlugin attempts to install a plugin by copying it to a sibling ../mattermost-server/plugin
-// directory. A server restart is required before the plugin will start.
 func copyPlugin(pluginID, targetPath, bundlePath string) error {
 	targetPath = filepath.Join(targetPath, "plugins")
 

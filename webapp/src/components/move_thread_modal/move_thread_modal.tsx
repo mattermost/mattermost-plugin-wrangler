@@ -3,8 +3,8 @@ import React from 'react';
 import {Modal} from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 
-import {Team} from 'mattermost-redux/types/teams';
-import {Channel} from 'mattermost-redux/types/channels';
+import {Team} from '@mattermost/types/teams';
+import {Channel} from '@mattermost/types/channels';
 
 import {MessageActionType, MessageActionTypeMove, MessageActionTypeCopy} from '../../types/actions';
 

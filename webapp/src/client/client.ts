@@ -1,9 +1,11 @@
-import {GetStateFunc} from 'mattermost-redux/types/actions';
+import {GlobalState} from '@mattermost/types/store';
 import {Client4} from 'mattermost-redux/client';
 import {getCurrentChannel} from 'mattermost-redux/selectors/entities/channels';
 import {getCurrentTeamId} from 'mattermost-redux/selectors/entities/teams';
 
 import id from '../plugin_id';
+
+type GetStateFunc = () => GlobalState;
 
 export default class Client {
     getSettings = async () => {

@@ -3,8 +3,8 @@ import React from 'react';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {faHatCowboy} from '@fortawesome/free-solid-svg-icons';
 
-import {Channel} from 'mattermost-redux/types/channels';
-import {Post} from 'mattermost-redux/types/posts';
+import {Channel} from '@mattermost/types/channels';
+import {Post} from '@mattermost/types/posts';
 
 interface Props {
     post: Post;

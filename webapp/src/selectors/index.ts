@@ -1,4 +1,4 @@
-import {GlobalState} from 'mattermost-redux/types/store';
+import {GlobalState} from '@mattermost/types/store';
 
 import id from '../plugin_id';
 

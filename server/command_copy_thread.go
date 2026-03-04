@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/pkg/errors"
 )
 
@@ -19,14 +19,14 @@ func getCopyThreadMessage() string {
 
 func (p *Plugin) runCopyThreadCommand(args []string, extra *model.CommandArgs) (*model.CommandResponse, bool, error) {
 	if len(args) < 2 {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, getCopyThreadMessage()), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, getCopyThreadMessage()), true, nil
 	}
 	postID := cleanInputID(args[0], extra.SiteURL)
 	channelID := args[1]
 
 	postListResponse, appErr := p.API.GetPostThread(postID)
 	if appErr != nil {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("Error: unable to get post with ID %s; ensure this is correct", postID)), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, fmt.Sprintf("Error: unable to get post with ID %s; ensure this is correct", postID)), true, nil
 	}
 	wpl := buildWranglerPostList(postListResponse)
 
@@ -36,7 +36,7 @@ func (p *Plugin) runCopyThreadCommand(args []string, extra *model.CommandArgs) (
 	}
 	_, appErr = p.API.GetChannelMember(channelID, extra.UserId)
 	if appErr != nil {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("Error: channel with ID %s doesn't exist or you are not a member", channelID)), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, fmt.Sprintf("Error: channel with ID %s doesn't exist or you are not a member", channelID)), true, nil
 	}
 	targetChannel, appErr := p.API.GetChannel(channelID)
 	if appErr != nil {
@@ -67,7 +67,6 @@ func (p *Plugin) runCopyThreadCommand(args []string, extra *model.CommandArgs) (
 	_, appErr = p.API.CreatePost(&model.Post{
 		UserId:    p.BotUserID,
 		RootId:    newRootPost.Id,
-		ParentId:  newRootPost.Id,
 		ChannelId: targetChannel.Id,
 		Message:   "This thread was copied from another channel",
 	})
@@ -79,7 +78,6 @@ func (p *Plugin) runCopyThreadCommand(args []string, extra *model.CommandArgs) (
 	_, appErr = p.API.CreatePost(&model.Post{
 		UserId:    p.BotUserID,
 		RootId:    wpl.RootPost().Id,
-		ParentId:  wpl.RootPost().Id,
 		ChannelId: originalChannel.Id,
 		Message:   fmt.Sprintf("A copy of this thread has been made: %s", newPostLink),
 	})
@@ -110,7 +108,7 @@ func (p *Plugin) runCopyThreadCommand(args []string, extra *model.CommandArgs) (
 		}
 	}
 
-	return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Thread copy complete"), false, nil
+	return getCommandResponse(model.CommandResponseTypeEphemeral, "Thread copy complete"), false, nil
 }
 
 func (p *Plugin) postCopyThreadBotDM(userID, newPostLink, executor string) error {

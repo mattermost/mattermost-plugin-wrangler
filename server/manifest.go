@@ -3,9 +3,9 @@
 package main
 
 import (
-	"strings"
+	"encoding/json"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost/server/public/model"
 )
 
 var manifest *model.Manifest
@@ -16,7 +16,7 @@ const manifestStr = `
   "name": "Wrangler",
   "description": "Manage messages across teams and channels",
   "version": "0.9.0",
-  "min_server_version": "7.1.0",
+  "min_server_version": "10.11.0",
   "server": {
     "executables": {
       "darwin-amd64": "server/dist/plugin-darwin-amd64",
@@ -158,5 +158,6 @@ const manifestStr = `
 `
 
 func init() {
-	manifest = model.ManifestFromJson(strings.NewReader(manifestStr))
+	manifest = new(model.Manifest)
+	_ = json.Unmarshal([]byte(manifestStr), manifest)
 }
