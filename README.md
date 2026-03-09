@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/gabrieljackson/mattermost-plugin-wrangler/actions/workflows/ci.yaml/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/gabrieljackson/mattermost-plugin-wrangler)](https://goreportcard.com/report/github.com/gabrieljackson/mattermost-plugin-wrangler)
 
-A community supported [Mattermost](https://mattermost.com) [plugin](https://developers.mattermost.com/integrate/plugins) for managing messages.
+A [Mattermost](https://mattermost.com) [plugin](https://developers.mattermost.com/integrate/plugins) for managing messages.
 
 ## About
 
@@ -137,8 +137,3 @@ Q: Is there a way to undo the message action I just took?
 
 A: No. If you moved a thread then moving it back should be simple enough, but there is no way to directly undo the actions that Wrangler takes.
 
----
-
-Q: What does it mean for a plugin to be community supported?
-
-A: Wrangler is one of many plugins that is available to be deployed to a Mattermost instance, but is not directly maintained by Mattermost. Instead, community contributions are accepted for fixes and new features.
