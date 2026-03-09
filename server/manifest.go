@@ -174,7 +174,7 @@ const manifestStr = `
         "type": "text",
         "help_text": "The message being sent to the user after copying a message. Allowed variables: {executor}, {postLink}",
         "placeholder": "",
-        "default": "@{executor} wrangled a thread you started to a new channel for you: {postLink}",
+        "default": "@{executor} copied a thread you started to a new channel for you: {postLink}",
         "hosting": "",
         "secret": false
       }
