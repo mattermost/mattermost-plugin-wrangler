@@ -109,9 +109,7 @@ issues:
   exclude-rules:
     - path: server/manifest.go
       linters:
-        - deadcode
         - unused
-        - varcheck
     - path: server/configuration.go
       linters:
         - unused
@@ -119,4 +117,3 @@ issues:
       linters:
         - bodyclose
         - goconst
-        - scopelint
