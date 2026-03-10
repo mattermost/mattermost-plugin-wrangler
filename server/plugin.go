@@ -1,12 +1,14 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/pkg/errors"
 
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/plugin"
+	"github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/plugin"
 )
 
 // Plugin implements the interface expected by the Mattermost server to communicate between the server and plugin processes.
@@ -46,15 +48,25 @@ func (p *Plugin) OnActivate() error {
 		DisplayName: "Wrangler",
 		Description: "Created by the Wrangler plugin.",
 	}
-	options := []plugin.EnsureBotOption{
-		plugin.ProfileImagePath("assets/profile.png"),
-	}
 
-	botID, err := p.Helpers.EnsureBot(bot, options...)
-	if err != nil {
-		return errors.Wrap(err, "failed to ensure Wrangler bot")
+	botID, ensureErr := p.API.EnsureBotUser(bot)
+	if ensureErr != nil {
+		return errors.Wrap(ensureErr, "failed to ensure Wrangler bot")
 	}
 	p.BotUserID = botID
+
+	bundlePath, err := p.API.GetBundlePath()
+	if err != nil {
+		return errors.Wrap(err, "failed to get bundle path")
+	}
+	profileImage, err := os.ReadFile(filepath.Join(bundlePath, "assets", "profile.png"))
+	if err != nil {
+		p.API.LogWarn("Failed to read profile image", "err", err.Error())
+	} else {
+		if appErr := p.API.SetProfileImage(botID, profileImage); appErr != nil {
+			p.API.LogWarn("Failed to set profile image for bot", "err", appErr.Error())
+		}
+	}
 
 	err = p.API.RegisterCommand(getCommand(
 		config.CommandAutoCompleteEnable,

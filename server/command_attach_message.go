@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/pkg/errors"
 )
 
@@ -20,35 +20,35 @@ func getAttachMessageCommand() string {
 
 func (p *Plugin) runAttachMessageCommand(args []string, extra *model.CommandArgs) (*model.CommandResponse, bool, error) {
 	if len(args) < 2 {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, getAttachMessageCommand()), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, getAttachMessageCommand()), true, nil
 	}
 	postToBeAttachedID := cleanInputID(args[0], extra.SiteURL)
 	postToAttachToID := cleanInputID(args[1], extra.SiteURL)
 
 	if postToBeAttachedID == postToAttachToID {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Error: the two provided message IDs should not be the same"), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, "Error: the two provided message IDs should not be the same"), true, nil
 	}
 
 	postToBeAttached, appErr := p.API.GetPost(postToBeAttachedID)
 	if appErr != nil {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("Error: unable to get message with ID %s; ensure this is correct", postToBeAttachedID)), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, fmt.Sprintf("Error: unable to get message with ID %s; ensure this is correct", postToBeAttachedID)), true, nil
 	}
 	postToAttachTo, appErr := p.API.GetPost(postToAttachToID)
 	if appErr != nil {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("Error: unable to get message with ID %s; ensure this is correct", postToAttachToID)), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, fmt.Sprintf("Error: unable to get message with ID %s; ensure this is correct", postToAttachToID)), true, nil
 	}
 
 	if postToBeAttached.ChannelId != extra.ChannelId {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Error: the attach command must be run from the channel containing the messages"), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, "Error: the attach command must be run from the channel containing the messages"), true, nil
 	}
 	if postToAttachTo.ChannelId != extra.ChannelId {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Error: unable to attach message to a thread in another channel"), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, "Error: unable to attach message to a thread in another channel"), true, nil
 	}
-	if len(postToBeAttached.RootId) != 0 || len(postToBeAttached.ParentId) != 0 {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Error: the message to be attached is already part of a thread"), true, nil
+	if len(postToBeAttached.RootId) != 0 {
+		return getCommandResponse(model.CommandResponseTypeEphemeral, "Error: the message to be attached is already part of a thread"), true, nil
 	}
 	if extra.RootId == postToBeAttached.Id || extra.ParentId == postToBeAttached.Id {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Error: the 'attach message' command cannot be run from inside the thread of the message being attached; please run directly in the channel containing the message you wish to attach"), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, "Error: the 'attach message' command cannot be run from inside the thread of the message being attached; please run directly in the channel containing the message you wish to attach"), true, nil
 	}
 
 	// We now know:
@@ -113,7 +113,6 @@ func (p *Plugin) runAttachMessageCommand(args []string, extra *model.CommandArgs
 
 	cleanPostID(postToBeAttached)
 	postToBeAttached.RootId = newRootID
-	postToBeAttached.ParentId = newRootID
 
 	newPost, appErr := p.createPostForUser(postToBeAttached)
 	if appErr != nil {
@@ -158,7 +157,7 @@ func (p *Plugin) runAttachMessageCommand(args []string, extra *model.CommandArgs
 
 	msg := "Message successfully attached to thread"
 
-	return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, msg), false, nil
+	return getCommandResponse(model.CommandResponseTypeEphemeral, msg), false, nil
 }
 
 func (p *Plugin) postAttachMessageBotDM(userID, newPostLink, executor string) error {

@@ -3,7 +3,7 @@
     "name": "Wrangler",
     "description": "Manage messages across teams and channels",
     "version": "0.9.0",
-    "min_server_version": "7.1.0",
+    "min_server_version": "10.11.0",
     "server": {
         "executables": {
             "darwin-amd64": "server/dist/plugin-darwin-amd64",
@@ -120,7 +120,7 @@
                 "type": "text",
                 "help_text": "The message being sent to the user after copying a message. Allowed variables: {executor}, {postLink}",
                 "placeholder": "",
-                "default": "@{executor} wrangled a thread you started to a new channel for you: {postLink}"
+                "default": "@{executor} copied a thread you started to a new channel for you: {postLink}"
             }
         ]
     }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/spf13/pflag"
 )
 
@@ -81,5 +81,5 @@ func (p *Plugin) runListMessagesCommand(args []string, extra *model.CommandArgs)
 
 	msg = codeBlock(strings.TrimRight(msg, "\n"))
 
-	return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, msg), false, nil
+	return getCommandResponse(model.CommandResponseTypeEphemeral, msg), false, nil
 }

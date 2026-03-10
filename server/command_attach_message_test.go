@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/plugin/plugintest"
+	"github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/plugin/plugintest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -20,7 +20,7 @@ func TestAttachMessageCommand(t *testing.T) {
 		Id:     model.NewId(),
 		TeamId: team1.Id,
 		Name:   "channel1",
-		Type:   model.CHANNEL_OPEN,
+		Type:   model.ChannelTypeOpen,
 	}
 	postToBeAttached := &model.Post{
 		Id:        model.NewId(),
@@ -47,7 +47,6 @@ func TestAttachMessageCommand(t *testing.T) {
 		Id:        model.NewId(),
 		ChannelId: channel1.Id,
 		RootId:    rootID,
-		ParentId:  rootID,
 	}
 	postInAnotherChannel := &model.Post{
 		Id:        model.NewId(),
@@ -57,7 +56,7 @@ func TestAttachMessageCommand(t *testing.T) {
 		Id:     model.NewId(),
 		TeamId: team1.Id,
 		Name:   "direct1",
-		Type:   model.CHANNEL_DIRECT,
+		Type:   model.ChannelTypeDirect,
 	}
 	currentTeam := &model.Team{
 		Id:   model.NewId(),

@@ -6,7 +6,7 @@ const manifest = JSON.parse(`
     "name": "Wrangler",
     "description": "Manage messages across teams and channels",
     "version": "0.9.0",
-    "min_server_version": "7.1.0",
+    "min_server_version": "10.11.0",
     "server": {
         "executables": {
             "darwin-amd64": "server/dist/plugin-darwin-amd64",
@@ -44,7 +44,9 @@ const manifest = JSON.parse(`
                         "display_name": "All users",
                         "value": "all-users"
                     }
-                ]
+                ],
+                "hosting": "",
+                "secret": false
             },
             {
                 "key": "AllowedEmailDomain",
@@ -52,7 +54,9 @@ const manifest = JSON.parse(`
                 "type": "text",
                 "help_text": "(Optional) When set, users must have an email ending in this domain to use Wrangler. Multiple domains can be specified by separating them with commas. This also supports full email address matching if you want to limit plugin usage to specific users.",
                 "placeholder": "",
-                "default": null
+                "default": null,
+                "hosting": "",
+                "secret": false
             },
             {
                 "key": "EnableWebUI",
@@ -60,7 +64,9 @@ const manifest = JSON.parse(`
                 "type": "bool",
                 "help_text": "Enable the work-in-progress Wrangler webapp functionality.",
                 "placeholder": "",
-                "default": false
+                "default": false,
+                "hosting": "",
+                "secret": false
             },
             {
                 "key": "CommandAutoCompleteEnable",
@@ -68,7 +74,9 @@ const manifest = JSON.parse(`
                 "type": "bool",
                 "help_text": "Control whether command autocomplete is enabled or not. If enabled and Allowed Email Domain is set, then some users will be able to see the Wrangler commands, but will be unable to run them.",
                 "placeholder": "",
-                "default": false
+                "default": false,
+                "hosting": "",
+                "secret": false
             },
             {
                 "key": "MoveThreadMaxCount",
@@ -76,7 +84,9 @@ const manifest = JSON.parse(`
                 "type": "text",
                 "help_text": "The maximum number of messages in a thread that the plugin is allowed to move. Leave empty for unlimited messages.",
                 "placeholder": "",
-                "default": null
+                "default": null,
+                "hosting": "",
+                "secret": false
             },
             {
                 "key": "MoveThreadToAnotherTeamEnable",
@@ -84,7 +94,9 @@ const manifest = JSON.parse(`
                 "type": "bool",
                 "help_text": "Control whether Wrangler is permitted to move message threads from one team to another or not.",
                 "placeholder": "",
-                "default": false
+                "default": false,
+                "hosting": "",
+                "secret": false
             },
             {
                 "key": "MoveThreadFromPrivateChannelEnable",
@@ -92,7 +104,9 @@ const manifest = JSON.parse(`
                 "type": "bool",
                 "help_text": "Control whether Wrangler is permitted to move message threads from private channels or not.",
                 "placeholder": "",
-                "default": false
+                "default": false,
+                "hosting": "",
+                "secret": false
             },
             {
                 "key": "MoveThreadFromDirectMessageChannelEnable",
@@ -100,7 +114,9 @@ const manifest = JSON.parse(`
                 "type": "bool",
                 "help_text": "Control whether Wrangler is permitted to move message threads from direct message channels or not.",
                 "placeholder": "",
-                "default": false
+                "default": false,
+                "hosting": "",
+                "secret": false
             },
             {
                 "key": "MoveThreadFromGroupMessageChannelEnable",
@@ -108,7 +124,9 @@ const manifest = JSON.parse(`
                 "type": "bool",
                 "help_text": "Control whether Wrangler is permitted to move message threads from group message channels or not.",
                 "placeholder": "",
-                "default": false
+                "default": false,
+                "hosting": "",
+                "secret": false
             },
             {
                 "key": "MergeThreadEnable",
@@ -116,7 +134,9 @@ const manifest = JSON.parse(`
                 "type": "bool",
                 "help_text": "Control whether Wrangler is permitted to merge message threads. Depending on other plugin settings these threads can be merged across channels and teams. Note that message timestamps are preserved when threads are merged which could result in unexpected or confusing message ordering.",
                 "placeholder": "",
-                "default": false
+                "default": false,
+                "hosting": "",
+                "secret": false
             },
             {
                 "key": "ThreadAttachMessage",
@@ -124,7 +144,9 @@ const manifest = JSON.parse(`
                 "type": "text",
                 "help_text": "The message being sent to the user after attaching his message to a thread. Allowed variables: {executor}, {postLink}",
                 "placeholder": "",
-                "default": "@{executor} wrangled one of your messages into a thread for you: {postLink}"
+                "default": "@{executor} wrangled one of your messages into a thread for you: {postLink}",
+                "hosting": "",
+                "secret": false
             },
             {
                 "key": "MoveThreadMessage",
@@ -132,7 +154,9 @@ const manifest = JSON.parse(`
                 "type": "text",
                 "help_text": "The message being sent to the user after moving a thread. Allowed variables: {executor}, {postLink}",
                 "placeholder": "",
-                "default": "@{executor} wrangled a thread you started to a new channel for you: {postLink}"
+                "default": "@{executor} wrangled a thread you started to a new channel for you: {postLink}",
+                "hosting": "",
+                "secret": false
             },
             {
                 "key": "CopyThreadMessage",
@@ -140,9 +164,12 @@ const manifest = JSON.parse(`
                 "type": "text",
                 "help_text": "The message being sent to the user after copying a message. Allowed variables: {executor}, {postLink}",
                 "placeholder": "",
-                "default": "@{executor} wrangled a thread you started to a new channel for you: {postLink}"
+                "default": "@{executor} copied a thread you started to a new channel for you: {postLink}",
+                "hosting": "",
+                "secret": false
             }
-        ]
+        ],
+        "sections": null
     }
 }
 `);

@@ -10,7 +10,7 @@
             "experimentalObjectRestSpread": true
         }
     },
-    "parser": "babel-eslint",
+    "parser": "@babel/eslint-parser",
     "plugins": [
         "react",
         "import"
@@ -632,6 +632,7 @@
                 "@typescript-eslint/ban-types": 1,
                 "@typescript-eslint/ban-ts-comment": 0,
                 "@typescript-eslint/no-var-requires": 0,
+                "@typescript-eslint/no-explicit-any": 0,
                 "@typescript-eslint/prefer-interface": 0,
                 "@typescript-eslint/explicit-function-return-type": 0,
                 "@typescript-eslint/indent": [
