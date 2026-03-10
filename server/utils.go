@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -18,8 +16,8 @@ func makePostLink(siteURL, teamName, postID string) string {
 
 func makeBotDM(base, newPostLink, executor string) string {
 	message := cleanMessageJSON(base)
-	message = strings.Replace(message, "{executor}", executor, -1)
-	message = strings.Replace(message, "{postLink}", newPostLink, -1)
+	message = strings.ReplaceAll(message, "{executor}", executor)
+	message = strings.ReplaceAll(message, "{postLink}", newPostLink)
 
 	return message
 }
@@ -51,10 +49,10 @@ func cleanMessage(message string) string {
 	message = strings.TrimLeft(message, " ")
 
 	// Remove all code block markdown.
-	message = strings.Replace(message, "```", "", -1)
+	message = strings.ReplaceAll(message, "```", "")
 
 	// Replace all newlines to keep summary condensed.
-	message = strings.Replace(message, "\n", " | ", -1)
+	message = strings.ReplaceAll(message, "\n", " | ")
 
 	return message
 }
@@ -73,29 +71,12 @@ func trimMessage(message string, trimLength int) string {
 	return fmt.Sprintf("%s...", message[:trimLength])
 }
 
-func prettyPrintJSON(in string) string {
-	var out bytes.Buffer
-	err := json.Indent(&out, []byte(in), "", "\t")
-	if err != nil {
-		return in
-	}
-	return out.String()
-}
-
-func jsonCodeBlock(in string) string {
-	return fmt.Sprintf("``` json\n%s\n```", in)
-}
-
 func codeBlock(in string) string {
 	return fmt.Sprintf("```\n%s\n```", in)
 }
 
 func quoteBlock(in string) string {
 	return fmt.Sprintf("> %s", in)
-}
-
-func inlineCode(in string) string {
-	return fmt.Sprintf("`%s`", in)
 }
 
 // NewBool returns a pointer to a given bool.

@@ -87,8 +87,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			break
 		}
 
-		switch stringArgs[2] {
-		case "thread":
+		if stringArgs[2] == "thread" {
 			handler = p.runMoveThreadCommand
 			stringArgs = stringArgs[3:]
 		}
@@ -97,8 +96,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			break
 		}
 
-		switch stringArgs[2] {
-		case "thread":
+		if stringArgs[2] == "thread" {
 			handler = p.runCopyThreadCommand
 			stringArgs = stringArgs[3:]
 		}
@@ -107,8 +105,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			break
 		}
 
-		switch stringArgs[2] {
-		case "message":
+		if stringArgs[2] == "message" {
 			handler = p.runAttachMessageCommand
 			stringArgs = stringArgs[3:]
 		}
@@ -117,8 +114,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			break
 		}
 
-		switch stringArgs[2] {
-		case "thread":
+		if stringArgs[2] == "thread" {
 			handler = p.runMergeThreadCommand
 			stringArgs = stringArgs[3:]
 		}
@@ -231,12 +227,12 @@ func getAutocompleteData(mergedEnabled bool) *model.AutocompleteData {
 	move.AddCommand(moveThread)
 	wrangler.AddCommand(move)
 
-	copy := model.NewAutocompleteData("copy", "[subcommand]", "Copy messages")
+	copyCmd := model.NewAutocompleteData("copy", "[subcommand]", "Copy messages")
 	copyThread := model.NewAutocompleteData("thread", "[MESSAGE_ID or MESSAGE_LINK] [CHANNEL_ID]", "Copy a message and the thread it belongs to")
 	copyThread.AddTextArgument("The ID of the message or a direct link to the message to be copied", "[MESSAGE_ID or MESSAGE_LINK]", "")
 	copyThread.AddTextArgument("The ID of the channel where the message will be copied to", "[CHANNEL_ID]", "")
-	copy.AddCommand(copyThread)
-	wrangler.AddCommand(copy)
+	copyCmd.AddCommand(copyThread)
+	wrangler.AddCommand(copyCmd)
 
 	attach := model.NewAutocompleteData("attach", "[subcommand]", "Attach messages")
 	attachMessage := model.NewAutocompleteData("message", "[MESSAGE_ID_TO_ATTACH or MESSAGE_LINK_TO_ATTACH] [ROOT_MESSAGE_ID or ROOT_MESSAGE_LINK]", "Attach a message to a thread in the channel")

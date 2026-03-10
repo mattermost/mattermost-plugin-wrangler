@@ -104,7 +104,6 @@ func mockGenerateTeams(total int) []*model.Team {
 			Id:   model.NewId(),
 			Name: fmt.Sprintf("team-%d", i),
 		})
-
 	}
 
 	return teams
@@ -117,7 +116,6 @@ func mockGenerateChannels(total int) []*model.Channel {
 			Id:   model.NewId(),
 			Name: fmt.Sprintf("channel-%d", i),
 		})
-
 	}
 
 	return channels

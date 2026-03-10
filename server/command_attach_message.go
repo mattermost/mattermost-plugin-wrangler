@@ -31,7 +31,6 @@ func (p *Plugin) runAttachMessageCommand(args []string, extra *model.CommandArgs
 
 	postToBeAttached, appErr := p.API.GetPost(postToBeAttachedID)
 	if appErr != nil {
-
 		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("Error: unable to get message with ID %s; ensure this is correct", postToBeAttachedID)), true, nil
 	}
 	postToAttachTo, appErr := p.API.GetPost(postToAttachToID)
@@ -157,7 +156,7 @@ func (p *Plugin) runAttachMessageCommand(args []string, extra *model.CommandArgs
 		}
 	}
 
-	msg := fmt.Sprintf("Message successfully attached to thread")
+	msg := "Message successfully attached to thread"
 
 	return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, msg), false, nil
 }
