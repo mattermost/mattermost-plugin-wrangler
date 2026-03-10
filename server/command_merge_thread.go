@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/pkg/errors"
 )
 
@@ -21,30 +21,30 @@ func getMergeThreadMessage() string {
 
 func (p *Plugin) runMergeThreadCommand(args []string, extra *model.CommandArgs) (*model.CommandResponse, bool, error) {
 	if !p.getConfiguration().MergeThreadEnable {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Merge thread command is not enabled"), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, "Merge thread command is not enabled"), true, nil
 	}
 	if len(args) < 2 {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, getMergeThreadMessage()), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, getMergeThreadMessage()), true, nil
 	}
 	originalPostID := cleanInputID(args[0], extra.SiteURL)
 	mergeToPostID := cleanInputID(args[1], extra.SiteURL)
 
 	postListResponse, appErr := p.API.GetPostThread(originalPostID)
 	if appErr != nil {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("Error: unable to get post with ID %s; ensure this is correct", originalPostID)), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, fmt.Sprintf("Error: unable to get post with ID %s; ensure this is correct", originalPostID)), true, nil
 	}
 	wpl := buildWranglerPostList(postListResponse)
 	originalChannelID := wpl.RootPost().ChannelId
 
 	targetPostListResponse, appErr := p.API.GetPostThread(mergeToPostID)
 	if appErr != nil {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("Error: unable to get post with ID %s; ensure this is correct", mergeToPostID)), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, fmt.Sprintf("Error: unable to get post with ID %s; ensure this is correct", mergeToPostID)), true, nil
 	}
 	targetRootPost := getRootPostFromPostList(targetPostListResponse)
 
 	err := p.ensureOriginalAndTargetChannelMember(originalChannelID, targetRootPost.ChannelId, extra.UserId)
 	if err != nil {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, err.Error()), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, err.Error()), true, nil
 	}
 
 	originalChannel, appErr := p.API.GetChannel(originalChannelID)
@@ -98,7 +98,7 @@ func (p *Plugin) runMergeThreadCommand(args []string, extra *model.CommandArgs) 
 
 	newPostLink := makePostLink(*p.API.GetConfig().ServiceSettings.SiteURL, targetTeam.Name, targetRootPost.Id)
 
-	return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("A thread with %d message(s) has been merged: %s\n", wpl.NumPosts(), newPostLink)), false, nil
+	return getCommandResponse(model.CommandResponseTypeEphemeral, fmt.Sprintf("A thread with %d message(s) has been merged: %s\n", wpl.NumPosts(), newPostLink)), false, nil
 }
 
 func (p *Plugin) mergeWranglerPostlist(wpl *WranglerPostList, targetRootPost *model.Post) error {
@@ -153,7 +153,6 @@ func (p *Plugin) mergeWranglerPostlist(wpl *WranglerPostList, targetRootPost *mo
 		newPost := post.Clone()
 		cleanPostID(newPost)
 		newPost.RootId = targetRootPost.Id
-		newPost.ParentId = targetRootPost.Id
 		newPost.ChannelId = targetRootPost.ChannelId
 
 		newPost, err = p.createPostWithRetries(newPost, 200*time.Millisecond, 3)

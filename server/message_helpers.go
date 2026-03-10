@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/pkg/errors"
 )
 
@@ -18,24 +18,24 @@ func (p *Plugin) validateMoveOrCopy(wpl *WranglerPostList, originalChannel *mode
 		return nil, false, errors.New("The wrangler post list contains no posts")
 	}
 
-	if !p.API.HasPermissionToChannel(extra.UserId, targetChannel.Id, model.PERMISSION_CREATE_POST) {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("Error: you don't have permissions to create posts in channel %s", targetChannel.Name)), true, nil
+	if !p.API.HasPermissionToChannel(extra.UserId, targetChannel.Id, model.PermissionCreatePost) {
+		return getCommandResponse(model.CommandResponseTypeEphemeral, fmt.Sprintf("Error: you don't have permissions to create posts in channel %s", targetChannel.Name)), true, nil
 	}
 
 	config := p.getConfiguration()
 
 	switch originalChannel.Type {
-	case model.CHANNEL_PRIVATE:
+	case model.ChannelTypePrivate:
 		if !config.MoveThreadFromPrivateChannelEnable {
-			return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Wrangler is currently configured to not allow moving posts from private channels"), false, nil
+			return getCommandResponse(model.CommandResponseTypeEphemeral, "Wrangler is currently configured to not allow moving posts from private channels"), false, nil
 		}
-	case model.CHANNEL_DIRECT:
+	case model.ChannelTypeDirect:
 		if !config.MoveThreadFromDirectMessageChannelEnable {
-			return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Wrangler is currently configured to not allow moving posts from direct message channels"), false, nil
+			return getCommandResponse(model.CommandResponseTypeEphemeral, "Wrangler is currently configured to not allow moving posts from direct message channels"), false, nil
 		}
-	case model.CHANNEL_GROUP:
+	case model.ChannelTypeGroup:
 		if !config.MoveThreadFromGroupMessageChannelEnable {
-			return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Wrangler is currently configured to not allow moving posts from group message channels"), false, nil
+			return getCommandResponse(model.CommandResponseTypeEphemeral, "Wrangler is currently configured to not allow moving posts from group message channels"), false, nil
 		}
 	}
 
@@ -43,25 +43,25 @@ func (p *Plugin) validateMoveOrCopy(wpl *WranglerPostList, originalChannel *mode
 		// DM and GM channels are "teamless" so it doesn't make sense to check
 		// the MoveThreadToAnotherTeamEnable config when dealing with those.
 		if !config.MoveThreadToAnotherTeamEnable && targetChannel.TeamId != originalChannel.TeamId {
-			return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Wrangler is currently configured to not allow moving messages to different teams"), false, nil
+			return getCommandResponse(model.CommandResponseTypeEphemeral, "Wrangler is currently configured to not allow moving messages to different teams"), false, nil
 		}
 	}
 
 	if config.MaxThreadCountMoveSizeInt() != 0 && config.MaxThreadCountMoveSizeInt() < wpl.NumPosts() {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("Error: the thread is %d posts long, but this command is configured to only move threads of up to %d posts", wpl.NumPosts(), config.MaxThreadCountMoveSizeInt())), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, fmt.Sprintf("Error: the thread is %d posts long, but this command is configured to only move threads of up to %d posts", wpl.NumPosts(), config.MaxThreadCountMoveSizeInt())), true, nil
 	}
 
 	if wpl.RootPost().ChannelId != extra.ChannelId {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Error: this command must be run from the channel containing the post"), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, "Error: this command must be run from the channel containing the post"), true, nil
 	}
 
 	_, appErr := p.API.GetChannelMember(targetChannel.Id, extra.UserId)
 	if appErr != nil {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("Error: channel with ID %s doesn't exist or you are not a member", targetChannel.Id)), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, fmt.Sprintf("Error: channel with ID %s doesn't exist or you are not a member", targetChannel.Id)), true, nil
 	}
 
 	if extra.RootId == wpl.RootPost().Id || extra.ParentId == wpl.RootPost().Id {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Error: this command cannot be run from inside the thread; please run directly in the channel containing the thread"), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, "Error: this command cannot be run from inside the thread; please run directly in the channel containing the thread"), true, nil
 	}
 
 	return nil, false, nil
@@ -78,28 +78,28 @@ func (p *Plugin) validateMerge(wpl *WranglerPostList, targetRootPost *model.Post
 		return nil, false, errors.New("The target root post is nil")
 	}
 	if wpl.RootPost().Id == targetRootPost.Id {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Error: Original and target threads are the same"), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, "Error: Original and target threads are the same"), true, nil
 	}
 
 	err := p.ensureOriginalAndTargetChannelMember(originalChannel.Id, targetChannel.Id, extra.UserId)
 	if err != nil {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, err.Error()), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, err.Error()), true, nil
 	}
 
 	config := p.getConfiguration()
 
 	switch originalChannel.Type {
-	case model.CHANNEL_PRIVATE:
+	case model.ChannelTypePrivate:
 		if !config.MoveThreadFromPrivateChannelEnable {
-			return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Wrangler is currently configured to not allow moving posts from private channels"), false, nil
+			return getCommandResponse(model.CommandResponseTypeEphemeral, "Wrangler is currently configured to not allow moving posts from private channels"), false, nil
 		}
-	case model.CHANNEL_DIRECT:
+	case model.ChannelTypeDirect:
 		if !config.MoveThreadFromDirectMessageChannelEnable {
-			return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Wrangler is currently configured to not allow moving posts from direct message channels"), false, nil
+			return getCommandResponse(model.CommandResponseTypeEphemeral, "Wrangler is currently configured to not allow moving posts from direct message channels"), false, nil
 		}
-	case model.CHANNEL_GROUP:
+	case model.ChannelTypeGroup:
 		if !config.MoveThreadFromGroupMessageChannelEnable {
-			return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Wrangler is currently configured to not allow moving posts from group message channels"), false, nil
+			return getCommandResponse(model.CommandResponseTypeEphemeral, "Wrangler is currently configured to not allow moving posts from group message channels"), false, nil
 		}
 	}
 
@@ -107,20 +107,20 @@ func (p *Plugin) validateMerge(wpl *WranglerPostList, targetRootPost *model.Post
 		// DM and GM channels are "teamless" so it doesn't make sense to check
 		// the MoveThreadToAnotherTeamEnable config when dealing with those.
 		if !config.MoveThreadToAnotherTeamEnable && targetChannel.TeamId != originalChannel.TeamId {
-			return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Wrangler is currently configured to not allow moving messages to different teams"), false, nil
+			return getCommandResponse(model.CommandResponseTypeEphemeral, "Wrangler is currently configured to not allow moving messages to different teams"), false, nil
 		}
 	}
 
 	if config.MaxThreadCountMoveSizeInt() != 0 && config.MaxThreadCountMoveSizeInt() < wpl.NumPosts() {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("Error: the thread is %d posts long, but this command is configured to only move threads of up to %d posts", wpl.NumPosts(), config.MaxThreadCountMoveSizeInt())), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, fmt.Sprintf("Error: the thread is %d posts long, but this command is configured to only move threads of up to %d posts", wpl.NumPosts(), config.MaxThreadCountMoveSizeInt())), true, nil
 	}
 
 	if wpl.RootPost().CreateAt < targetRootPost.CreateAt {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Error: Cannot merge older threads into newer threads. The destination thread must be older than the thread being moved."), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, "Error: Cannot merge older threads into newer threads. The destination thread must be older than the thread being moved."), true, nil
 	}
 
 	if extra.RootId == wpl.RootPost().Id || extra.ParentId == wpl.RootPost().Id {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, "Error: this command cannot be run from inside the thread; please run directly in the channel containing the thread"), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, "Error: this command cannot be run from inside the thread; please run directly in the channel containing the thread"), true, nil
 	}
 
 	return nil, false, nil
@@ -210,7 +210,6 @@ func (p *Plugin) copyWranglerPostlist(wpl *WranglerPostList, targetChannel *mode
 			newRootPost = newPost.Clone()
 		} else {
 			newPost.RootId = newRootPost.Id
-			newPost.ParentId = newRootPost.Id
 			newPost, err = p.createPostWithRetries(newPost, 200*time.Millisecond, 3)
 			if err != nil {
 				return nil, errors.Wrap(err, "unable to create new post")

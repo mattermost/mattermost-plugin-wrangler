@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 )
@@ -51,7 +51,7 @@ func getMoveThreadMessage() string {
 
 func (p *Plugin) runMoveThreadCommand(args []string, extra *model.CommandArgs) (*model.CommandResponse, bool, error) {
 	if len(args) < 2 {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, getMoveThreadMessage()), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, getMoveThreadMessage()), true, nil
 	}
 	showRootMessageInSummary, silent, err := parseMoveThreadFlagArgs(args)
 	if err != nil {
@@ -62,7 +62,7 @@ func (p *Plugin) runMoveThreadCommand(args []string, extra *model.CommandArgs) (
 
 	postListResponse, appErr := p.API.GetPostThread(postID)
 	if appErr != nil {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("Error: unable to get post with ID %s; ensure this is correct", postID)), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, fmt.Sprintf("Error: unable to get post with ID %s; ensure this is correct", postID)), true, nil
 	}
 	wpl := buildWranglerPostList(postListResponse)
 
@@ -72,7 +72,7 @@ func (p *Plugin) runMoveThreadCommand(args []string, extra *model.CommandArgs) (
 	}
 	_, appErr = p.API.GetChannelMember(channelID, extra.UserId)
 	if appErr != nil {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("Error: channel with ID %s doesn't exist or you are not a member", channelID)), true, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, fmt.Sprintf("Error: channel with ID %s doesn't exist or you are not a member", channelID)), true, nil
 	}
 	targetChannel, appErr := p.API.GetChannel(channelID)
 	if appErr != nil {
@@ -107,7 +107,6 @@ func (p *Plugin) runMoveThreadCommand(args []string, extra *model.CommandArgs) (
 		_, appErr = p.API.CreatePost(&model.Post{
 			UserId:    p.BotUserID,
 			RootId:    newRootPost.Id,
-			ParentId:  newRootPost.Id,
 			ChannelId: channelID,
 			Message:   "This thread was moved from another channel",
 		})
@@ -132,7 +131,7 @@ func (p *Plugin) runMoveThreadCommand(args []string, extra *model.CommandArgs) (
 	newPostLink := makePostLink(*p.API.GetConfig().ServiceSettings.SiteURL, targetTeam.Name, newRootPost.Id)
 
 	if silent {
-		return getCommandResponse(model.COMMAND_RESPONSE_TYPE_EPHEMERAL, fmt.Sprintf("A thread with %d message(s) has been silently moved: %s\n", wpl.NumPosts(), newPostLink)), false, nil
+		return getCommandResponse(model.CommandResponseTypeEphemeral, fmt.Sprintf("A thread with %d message(s) has been silently moved: %s\n", wpl.NumPosts(), newPostLink)), false, nil
 	}
 
 	executor, execError := p.API.GetUser(extra.UserId)
@@ -164,7 +163,7 @@ func (p *Plugin) runMoveThreadCommand(args []string, extra *model.CommandArgs) (
 		)
 	}
 
-	return getCommandResponse(model.COMMAND_RESPONSE_TYPE_IN_CHANNEL, msg), false, nil
+	return getCommandResponse(model.CommandResponseTypeInChannel, msg), false, nil
 }
 
 func (p *Plugin) postMoveThreadBotDM(userID, newPostLink, executor string) error {

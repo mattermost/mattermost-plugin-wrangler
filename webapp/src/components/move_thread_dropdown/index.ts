@@ -1,7 +1,7 @@
 import {connect} from 'react-redux';
 import {Dispatch, Action, bindActionCreators} from 'redux';
 
-import {GlobalState} from 'mattermost-redux/types/store';
+import {GlobalState} from '@mattermost/types/store';
 import {isCombinedUserActivityPost} from 'mattermost-redux/utils/post_list';
 import {isSystemMessage} from 'mattermost-redux/utils/post_utils';
 import {getPost as getPostSel} from 'mattermost-redux/selectors/entities/posts';

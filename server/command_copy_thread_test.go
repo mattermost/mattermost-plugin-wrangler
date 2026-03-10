@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/plugin/plugintest"
+	"github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/plugin/plugintest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -20,31 +20,31 @@ func TestCopyThreadCommand(t *testing.T) {
 		Id:     model.NewId(),
 		TeamId: team1.Id,
 		Name:   "original-channel",
-		Type:   model.CHANNEL_OPEN,
+		Type:   model.ChannelTypeOpen,
 	}
 	privateChannel := &model.Channel{
 		Id:     model.NewId(),
 		TeamId: team1.Id,
 		Name:   "private-channel",
-		Type:   model.CHANNEL_PRIVATE,
+		Type:   model.ChannelTypePrivate,
 	}
 	directChannel := &model.Channel{
 		Id:     model.NewId(),
 		TeamId: team1.Id,
 		Name:   "direct-channel",
-		Type:   model.CHANNEL_DIRECT,
+		Type:   model.ChannelTypeDirect,
 	}
 	groupChannel := &model.Channel{
 		Id:     model.NewId(),
 		TeamId: team1.Id,
 		Name:   "group-channel",
-		Type:   model.CHANNEL_GROUP,
+		Type:   model.ChannelTypeGroup,
 	}
 	readOnlyChannel := &model.Channel{
 		Id:     model.NewId(),
 		TeamId: team1.Id,
 		Name:   "read-only",
-		Type:   model.CHANNEL_OPEN,
+		Type:   model.ChannelTypeOpen,
 	}
 
 	targetTeam := &model.Team{

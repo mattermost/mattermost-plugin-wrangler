@@ -1,7 +1,7 @@
 import {connect} from 'react-redux';
 import {Dispatch, Action, bindActionCreators} from 'redux';
 
-import {GlobalState} from 'mattermost-redux/types/store';
+import {GlobalState} from '@mattermost/types/store';
 
 import {finishMergingThread} from '../../actions';
 import {getMergeThreadPost} from '../../selectors';

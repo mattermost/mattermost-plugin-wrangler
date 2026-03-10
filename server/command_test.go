@@ -3,9 +3,9 @@ package main
 import (
 	"testing"
 
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/plugin"
-	"github.com/mattermost/mattermost-server/v5/plugin/plugintest"
+	"github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/plugin"
+	"github.com/mattermost/mattermost/server/public/plugin/plugintest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -21,7 +21,7 @@ func TestCommand(t *testing.T) {
 	adminUser := &model.User{
 		Id:    model.NewId(),
 		Email: "admin@admindomain.com",
-		Roles: model.SYSTEM_ADMIN_ROLE_ID,
+		Roles: model.SystemAdminRoleId,
 	}
 
 	api := &plugintest.API{}

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {Channel} from 'mattermost-redux/types/channels';
+import {Channel} from '@mattermost/types/channels';
 
 import LeftSidebarElement from '../left_sidebar_element';
 
