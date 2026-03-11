@@ -1,0 +1,23 @@
+name: ci
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - master
+    tags:
+      - "v*"
+
+jobs:
+  plugin-ci:
+    uses: mattermost/actions-workflows/.github/workflows/plugin-ci.yml@main
+    secrets: inherit
+    with:
+      golangci-lint-version: v2.1.6
+
+  dist:
+    uses: mattermost/actions-workflows/.github/workflows/plugin-dist-pr.yml@main
+    secrets: inherit
+    with:
+      dist-target: "dist"
+      s3-prefix: "mattermost-plugin-wrangler"

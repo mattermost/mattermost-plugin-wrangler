@@ -113,13 +113,3 @@ func respondJSON(w http.ResponseWriter, obj interface{}) (int, error) {
 
 	return http.StatusOK, nil
 }
-
-func decodeJSON(obj interface{}, body io.ReadCloser) error {
-	decoder := json.NewDecoder(body)
-	err := decoder.Decode(&obj)
-	if err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}

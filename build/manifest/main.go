@@ -122,7 +122,7 @@ func applyManifest(manifest *model.Manifest) error {
 		if err := os.WriteFile(
 			"server/manifest.go",
 			[]byte(fmt.Sprintf(pluginIDGoFileTemplate, manifestStr)),
-			0644,
+			0600,
 		); err != nil {
 			return errors.Wrap(err, "failed to write server/manifest.go")
 		}
@@ -138,7 +138,7 @@ func applyManifest(manifest *model.Manifest) error {
 		if err := os.WriteFile(
 			"webapp/src/manifest.ts",
 			[]byte(fmt.Sprintf(pluginIDJSFileTemplate, manifestStr)),
-			0644,
+			0600,
 		); err != nil {
 			return errors.Wrap(err, "failed to open webapp/src/manifest.ts")
 		}

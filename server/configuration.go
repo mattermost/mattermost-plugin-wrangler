@@ -93,15 +93,15 @@ func parseAndValidateMaxThreadCountMoveSize(s string) (int, error) {
 		return 0, nil
 	}
 
-	max, err := strconv.Atoi(s)
+	maxCount, err := strconv.Atoi(s)
 	if err != nil {
 		return 0, errors.Wrapf(err, "MoveThreadMaxSize value %s is not a valid integer", s)
 	}
-	if max < 1 {
-		return 0, fmt.Errorf("MoveThreadMaxSize (%d) must be greater than 0", max)
+	if maxCount < 1 {
+		return 0, fmt.Errorf("MoveThreadMaxSize (%d) must be greater than 0", maxCount)
 	}
 
-	return max, nil
+	return maxCount, nil
 }
 
 // getConfiguration retrieves the active configuration under lock, making it safe to use

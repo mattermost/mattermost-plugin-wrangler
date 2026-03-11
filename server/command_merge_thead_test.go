@@ -250,7 +250,7 @@ func TestMergeThreadCommand(t *testing.T) {
 		assert.Contains(t, resp.Text, "Error: the thread is 3 posts long, but this command is configured to only move threads of up to 1 posts")
 	})
 
-	t.Run("merge thread by link sucessfully", func(t *testing.T) {
+	t.Run("merge thread by link successfully", func(t *testing.T) {
 		// Reset the configuration from the previous test.
 		plugin.configuration.MoveThreadMaxCount = "3"
 		require.NoError(t, plugin.configuration.IsValid())
@@ -265,6 +265,5 @@ func TestMergeThreadCommand(t *testing.T) {
 		require.NoError(t, err)
 		assert.False(t, isUserError)
 		assert.Contains(t, resp.Text, "A thread with 3 message(s) has been merged")
-
 	})
 }

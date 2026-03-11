@@ -1,3 +1,20 @@
-.idea
 dist
+bin
+vendor
+.npminstall
+.eslintcache
+
+webapp/src/manifest.ts
+server/manifest.go
+
+# Dev
+*.code-workspace
+
+# Mac
 .DS_Store
+
+# Intellij
+.idea/
+
+# VS Code
+.vscode
