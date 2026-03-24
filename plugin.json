@@ -2,7 +2,6 @@
     "id": "com.mattermost.wrangler",
     "name": "Wrangler",
     "description": "Manage messages across teams and channels",
-    "version": "0.9.0",
     "min_server_version": "10.11.0",
     "server": {
         "executables": {
