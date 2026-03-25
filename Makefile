@@ -248,7 +248,7 @@ debug-dist: apply server webapp-debug bundle
 
 ## Runs any lints and unit tests defined for the server and webapp, if they exist.
 .PHONY: test
-test: webapp/.npminstall
+test: apply webapp/.npminstall
 ifneq ($(HAS_SERVER),)
 	$(GO) test -v $(GO_TEST_FLAGS) -ldflags '$(LDFLAGS)' ./server/...
 endif
