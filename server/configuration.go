@@ -104,18 +104,18 @@ func parseAndValidateMaxThreadCountMoveSize(s string) (int, error) {
 	return maxCount, nil
 }
 
-// getConfiguration retrieves the active configuration under lock, making it safe to use
-// concurrently. The active configuration may change underneath the client of this method, but
-// the struct returned by this API call is considered immutable.
+// getConfiguration reads the active plugin configuration live from the Mattermost config store
+// on every call. This ensures changes applied via mmctl config patch or any external config write
+// are reflected immediately without requiring a plugin restart or disable/enable cycle.
 func (p *Plugin) getConfiguration() *configuration {
-	p.configurationLock.RLock()
-	defer p.configurationLock.RUnlock()
+	var config = new(configuration)
 
-	if p.configuration == nil {
+	if err := p.API.LoadPluginConfiguration(config); err != nil {
+		p.API.LogError("Failed to load plugin configuration", "error", err.Error())
 		return &configuration{}
 	}
 
-	return p.configuration
+	return config
 }
 
 // setConfiguration replaces the active configuration under lock.
