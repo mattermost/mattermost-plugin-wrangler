@@ -199,7 +199,12 @@ func distManifest(manifest *model.Manifest) error {
 		return err
 	}
 
-	if err := os.WriteFile(fmt.Sprintf("dist/%s/plugin.json", manifest.Id), manifestBytes, 0600); err != nil {
+	distDir := fmt.Sprintf("dist/%s", manifest.Id)
+	if err := os.MkdirAll(distDir, 0750); err != nil {
+		return errors.Wrap(err, "failed to create dist directory")
+	}
+
+	if err := os.WriteFile(fmt.Sprintf("%s/plugin.json", distDir), manifestBytes, 0600); err != nil {
 		return errors.Wrap(err, "failed to write plugin.json")
 	}
 
