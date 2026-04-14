@@ -112,6 +112,12 @@ func TestCopyThreadCommand(t *testing.T) {
 
 	var plugin Plugin
 	plugin.SetAPI(api)
+	api.On("LoadPluginConfiguration", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+		cfg := args.Get(0).(*configuration)
+		if plugin.configuration != nil {
+			*cfg = *plugin.configuration
+		}
+	})
 
 	t.Run("no args", func(t *testing.T) {
 		resp, isUserError, err := plugin.runCopyThreadCommand([]string{}, &model.CommandArgs{ChannelId: originalChannel.Id})

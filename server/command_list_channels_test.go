@@ -18,6 +18,12 @@ func TestChannelListCommand(t *testing.T) {
 
 	var plugin Plugin
 	plugin.SetAPI(api)
+	api.On("LoadPluginConfiguration", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+		cfg := args.Get(0).(*configuration)
+		if plugin.configuration != nil {
+			*cfg = *plugin.configuration
+		}
+	})
 
 	t.Run("flags", func(t *testing.T) {
 		t.Run("team-filter", func(t *testing.T) {
