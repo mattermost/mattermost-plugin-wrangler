@@ -107,11 +107,20 @@ func parseAndValidateMaxThreadCountMoveSize(s string) (int, error) {
 // getConfiguration reads the active plugin configuration live from the Mattermost config store
 // on every call. This ensures changes applied via mmctl config patch or any external config write
 // are reflected immediately without requiring a plugin restart or disable/enable cycle.
+//
+// On load failure, falls back to the last-known-good config set by OnConfigurationChange.
+// A zero-value config is only returned when no cached config exists yet (e.g. first startup failure).
 func (p *Plugin) getConfiguration() *configuration {
 	var config = new(configuration)
 
 	if err := p.API.LoadPluginConfiguration(config); err != nil {
-		p.API.LogError("Failed to load plugin configuration", "error", err.Error())
+		p.configurationLock.RLock()
+		defer p.configurationLock.RUnlock()
+		if p.configuration != nil {
+			p.API.LogError("Failed to load plugin configuration — falling back to last-known-good config", "error", err.Error())
+			return p.configuration.Clone()
+		}
+		p.API.LogError("Failed to load plugin configuration and no cached config available", "error", err.Error())
 		return &configuration{}
 	}
 

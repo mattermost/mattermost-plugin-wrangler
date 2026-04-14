@@ -37,17 +37,36 @@ func TestGetConfiguration(t *testing.T) {
 		api.AssertExpectations(t)
 	})
 
-	t.Run("returns empty config on LoadPluginConfiguration error", func(t *testing.T) {
+	t.Run("falls back to cached config on LoadPluginConfiguration error", func(t *testing.T) {
+		cached := &configuration{
+			PermittedWranglerUsers: permittedUserSystemAdmins,
+			MoveThreadMaxCount:     "25",
+		}
+
 		api := &plugintest.API{}
 		api.On("LoadPluginConfiguration", mock.Anything).Return(errors.New("store unavailable"))
-		api.On("LogError",
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(nil)
+		api.On("LogError", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		var plugin Plugin
 		plugin.SetAPI(api)
+		plugin.setConfiguration(cached)
+
+		got := plugin.getConfiguration()
+
+		assert.NotNil(t, got)
+		assert.Equal(t, cached.PermittedWranglerUsers, got.PermittedWranglerUsers)
+		assert.Equal(t, cached.MoveThreadMaxCount, got.MoveThreadMaxCount)
+		api.AssertExpectations(t)
+	})
+
+	t.Run("returns zero config when load fails and no cache exists", func(t *testing.T) {
+		api := &plugintest.API{}
+		api.On("LoadPluginConfiguration", mock.Anything).Return(errors.New("store unavailable"))
+		api.On("LogError", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		var plugin Plugin
+		plugin.SetAPI(api)
+		// Deliberately do NOT call setConfiguration — no cache available
 
 		got := plugin.getConfiguration()
 
