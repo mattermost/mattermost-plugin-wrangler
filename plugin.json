@@ -2,6 +2,8 @@
     "id": "com.mattermost.wrangler",
     "name": "Wrangler",
     "description": "Manage messages across teams and channels",
+    "homepage_url": "https://github.com/mattermost/mattermost-plugin-wrangler",
+    "support_url": "https://github.com/mattermost/mattermost-plugin-wrangler/issues",
     "min_server_version": "10.11.0",
     "server": {
         "executables": {

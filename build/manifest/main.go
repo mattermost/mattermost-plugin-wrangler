@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 
@@ -84,6 +85,11 @@ func main() {
 			panic("failed to apply manifest: " + err.Error())
 		}
 
+	case "dist":
+		if err := distManifest(manifest); err != nil {
+			panic("failed to write manifest to dist directory: " + err.Error())
+		}
+
 	default:
 		panic("unrecognized command: " + cmd)
 	}
@@ -133,6 +139,13 @@ func findManifest() (*model.Manifest, error) {
 		manifest.Version = strings.TrimPrefix(version, "v")
 	}
 
+	if manifest.ReleaseNotesURL == "" && BuildTagLatest != "" && manifest.HomepageURL != "" {
+		manifest.ReleaseNotesURL, err = url.JoinPath(manifest.HomepageURL, "releases", "tag", BuildTagLatest)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to generate release notes URL")
+		}
+	}
+
 	return &manifest, nil
 }
 
@@ -175,6 +188,24 @@ func applyManifest(manifest *model.Manifest) error {
 		); err != nil {
 			return errors.Wrap(err, "failed to open webapp/src/manifest.ts")
 		}
+	}
+
+	return nil
+}
+
+func distManifest(manifest *model.Manifest) error {
+	manifestBytes, err := json.MarshalIndent(manifest, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	distDir := fmt.Sprintf("dist/%s", manifest.Id)
+	if err := os.MkdirAll(distDir, 0750); err != nil {
+		return errors.Wrap(err, "failed to create dist directory")
+	}
+
+	if err := os.WriteFile(fmt.Sprintf("%s/plugin.json", distDir), manifestBytes, 0600); err != nil {
+		return errors.Wrap(err, "failed to write plugin.json")
 	}
 
 	return nil
