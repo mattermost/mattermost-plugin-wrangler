@@ -4,13 +4,18 @@ package main
 
 import (
 	"context"
+	stderrors "errors"
 	"fmt"
+	"io"
+	"io/fs"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/mattermost/mattermost/server/public/model"
-	"github.com/mholt/archiver/v3"
+	"github.com/mholt/archives"
 	"github.com/pkg/errors"
 )
 
@@ -109,10 +114,116 @@ func copyPlugin(pluginID, targetPath, bundlePath string) error {
 		return errors.Wrapf(err, "failed to remove existing existing plugin directory %s", existingPluginPath)
 	}
 
-	err = archiver.Unarchive(bundlePath, targetPath)
-	if err != nil {
+	if err := unarchiveBundle(context.Background(), bundlePath, targetPath); err != nil {
 		return errors.Wrapf(err, "failed to unarchive %s into %s", bundlePath, targetPath)
 	}
 
 	return nil
+}
+
+
+func unarchiveBundle(ctx context.Context, bundlePath, destDir string) error {
+	f, err := os.Open(bundlePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	format, stream, err := archives.Identify(ctx, filepath.Base(bundlePath), f)
+	if err != nil {
+		if stderrors.Is(err, archives.NoMatch) {
+			return fmt.Errorf("unrecognized archive format for %s", bundlePath)
+		}
+		return err
+	}
+
+	extractor, ok := format.(archives.Extractor)
+	if !ok {
+		return fmt.Errorf("format %T does not support extraction", format)
+	}
+
+	destDir, err = filepath.Abs(filepath.Clean(destDir))
+	if err != nil {
+		return err
+	}
+
+	return extractor.Extract(ctx, stream, func(ctx context.Context, info archives.FileInfo) error {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
+		if info.Mode()&fs.ModeSymlink != 0 {
+			return fmt.Errorf("symlink entries are not allowed in plugin bundles (%q)", info.NameInArchive)
+		}
+
+		outPath, err := safeExtractPath(destDir, info.NameInArchive)
+		if err != nil {
+			return err
+		}
+		if outPath == "" {
+			// Root or current-dir placeholder; nothing to write.
+			return drainArchiveFile(info)
+		}
+
+		switch {
+		case info.IsDir():
+			if err := os.MkdirAll(outPath, 0o755); err != nil {
+				return err
+			}
+			return drainArchiveFile(info)
+		default:
+			if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+				return err
+			}
+			mode := info.Mode().Perm()
+			if mode == 0 {
+				mode = 0o644
+			}
+			rc, err := info.Open()
+			if err != nil {
+				return err
+			}
+			defer rc.Close()
+			out, err := os.OpenFile(outPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode)
+			if err != nil {
+				return err
+			}
+			defer out.Close()
+			_, err = io.Copy(out, rc)
+			return err
+		}
+	})
+}
+
+func safeExtractPath(destDir, nameInArchive string) (string, error) {
+	rel := filepath.ToSlash(strings.TrimSpace(nameInArchive))
+	rel = strings.TrimPrefix(rel, "/")
+	if rel == "" || rel == "." {
+		return "", nil
+	}
+	for _, part := range strings.Split(rel, "/") {
+		if part == ".." {
+			return "", fmt.Errorf("illegal path in archive: %q", nameInArchive)
+		}
+	}
+	rel = strings.TrimPrefix(path.Clean("/"+rel), "/")
+	if rel == "" || rel == "." {
+		return "", nil
+	}
+	outPath := filepath.Join(destDir, filepath.FromSlash(rel))
+	relOut, err := filepath.Rel(destDir, outPath)
+	if err != nil || relOut == ".." || strings.HasPrefix(relOut, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("path escapes destination: %q", nameInArchive)
+	}
+	return outPath, nil
+}
+
+func drainArchiveFile(info archives.FileInfo) error {
+	rc, err := info.Open()
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+	_, err = io.Copy(io.Discard, rc)
+	return err
 }
