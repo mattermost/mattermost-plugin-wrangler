@@ -98,6 +98,12 @@ linters:
       - linters:
           - gosec
         text: G301
+      - linters:
+          - gosec
+        text: G703
+      - linters:
+          - gosec
+        text: G706
 
 formatters:
   disable-all: true

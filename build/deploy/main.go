@@ -121,7 +121,6 @@ func copyPlugin(pluginID, targetPath, bundlePath string) error {
 	return nil
 }
 
-
 func unarchiveBundle(ctx context.Context, bundlePath, destDir string) error {
 	f, err := os.Open(bundlePath)
 	if err != nil {
