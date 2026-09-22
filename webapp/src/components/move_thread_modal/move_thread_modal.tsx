@@ -1,7 +1,6 @@
 import React from 'react';
 
-import {Modal} from 'react-bootstrap';
-import Form from 'react-bootstrap/Form';
+import {Modal, Form, FormGroup, ControlLabel} from 'react-bootstrap';
 
 import {Team} from '@mattermost/types/teams';
 import {Channel} from '@mattermost/types/channels';
@@ -122,7 +121,7 @@ export default class MoveThreadModal extends React.PureComponent<Props, State> {
         this.setState({processing: false});
     };
 
-    private handleClose = async (event: React.MouseEvent) => {
+    private handleClose = async (event?: React.MouseEvent) => {
         if (event && event.preventDefault) {
             event.preventDefault();
         }
@@ -206,7 +205,7 @@ export default class MoveThreadModal extends React.PureComponent<Props, State> {
                 dialogClassName='modal--scroll'
                 show={this.props.visible}
                 onHide={this.handleClose}
-                onExited={this.handleClose}
+                onExited={() => this.handleClose()}
                 bsSize='large'
                 backdrop='static'
             >
@@ -215,8 +214,8 @@ export default class MoveThreadModal extends React.PureComponent<Props, State> {
                 </Modal.Header>
                 <Modal.Body>
                     <Form>
-                        <Form.Group>
-                            <Form.Label>{'Action'}</Form.Label>
+                        <FormGroup>
+                            <ControlLabel>{'Action'}</ControlLabel>
                             <fieldset
                                 key='actionType'
                                 className='multi-select__radio'
@@ -246,11 +245,11 @@ export default class MoveThreadModal extends React.PureComponent<Props, State> {
                                     </label>
                                 </div>
                             </fieldset>
-                        </Form.Group>
-                        <Form.Group>
-                            <Form.Label>{'Team'}</Form.Label>
-                            <Form.Control
-                                as='select'
+                        </FormGroup>
+                        <FormGroup>
+                            <ControlLabel>{'Team'}</ControlLabel>
+                            <select
+                                className='form-control'
                                 onChange={this.handleTeamSelectChange}
                                 value={this.state.selectedTeam}
                             >
@@ -263,12 +262,12 @@ export default class MoveThreadModal extends React.PureComponent<Props, State> {
                                         {team.display_name}
                                     </option>
                                 ))}
-                            </Form.Control>
-                        </Form.Group>
-                        <Form.Group>
-                            <Form.Label>{'Channel'}</Form.Label>
-                            <Form.Control
-                                as='select'
+                            </select>
+                        </FormGroup>
+                        <FormGroup>
+                            <ControlLabel>{'Channel'}</ControlLabel>
+                            <select
+                                className='form-control'
                                 onChange={this.handleChannelSelectChange}
                                 value={this.state.selectedChannel}
                                 disabled={this.state.selectedTeam === ''}
@@ -282,10 +281,10 @@ export default class MoveThreadModal extends React.PureComponent<Props, State> {
                                         {channel.display_name}
                                     </option>
                                 ))}
-                            </Form.Control>
-                        </Form.Group>
-                        <Form.Group>
-                            <Form.Label>{'Thread Root Message'}</Form.Label>
+                            </select>
+                        </FormGroup>
+                        <FormGroup>
+                            <ControlLabel>{'Thread Root Message'}</ControlLabel>
                             <textarea
                                 style={{resize: 'none'}}
                                 className='form-control'
@@ -295,7 +294,7 @@ export default class MoveThreadModal extends React.PureComponent<Props, State> {
                                 readOnly={true}
                             />
                             {moveCheckboxes}
-                        </Form.Group>
+                        </FormGroup>
                     </Form>
                     <p><span className='pull-right'>{moveMessage}</span></p>
                 </Modal.Body>
