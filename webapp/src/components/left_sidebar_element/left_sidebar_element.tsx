@@ -1,4 +1,4 @@
-import React, {ReactFragment} from 'react';
+import React, {ReactNode} from 'react';
 
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {faHatCowboy} from '@fortawesome/free-solid-svg-icons';
@@ -10,7 +10,7 @@ import './style.scss';
 interface Props {
     id: string;
     text: string;
-    tooltip: ReactFragment;
+    tooltip: ReactNode;
     newSidebar?: boolean;
     clickHandler: (event: React.MouseEvent) => void;
 }
