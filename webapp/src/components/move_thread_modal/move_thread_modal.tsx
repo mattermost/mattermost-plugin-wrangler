@@ -247,8 +247,9 @@ export default class MoveThreadModal extends React.PureComponent<Props, State> {
                             </fieldset>
                         </FormGroup>
                         <FormGroup>
-                            <ControlLabel>{'Team'}</ControlLabel>
+                            <ControlLabel htmlFor='wrangler-team-select'>{'Team'}</ControlLabel>
                             <select
+                                id='wrangler-team-select'
                                 className='form-control'
                                 onChange={this.handleTeamSelectChange}
                                 value={this.state.selectedTeam}
@@ -265,8 +266,9 @@ export default class MoveThreadModal extends React.PureComponent<Props, State> {
                             </select>
                         </FormGroup>
                         <FormGroup>
-                            <ControlLabel>{'Channel'}</ControlLabel>
+                            <ControlLabel htmlFor='wrangler-channel-select'>{'Channel'}</ControlLabel>
                             <select
+                                id='wrangler-channel-select'
                                 className='form-control'
                                 onChange={this.handleChannelSelectChange}
                                 value={this.state.selectedChannel}
@@ -284,8 +286,9 @@ export default class MoveThreadModal extends React.PureComponent<Props, State> {
                             </select>
                         </FormGroup>
                         <FormGroup>
-                            <ControlLabel>{'Thread Root Message'}</ControlLabel>
+                            <ControlLabel htmlFor='wrangler-thread-root-message'>{'Thread Root Message'}</ControlLabel>
                             <textarea
+                                id='wrangler-thread-root-message'
                                 style={{resize: 'none'}}
                                 className='form-control'
                                 rows={5}
