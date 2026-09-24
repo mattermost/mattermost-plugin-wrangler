@@ -25,11 +25,22 @@ export default class LeftSidebarElement extends React.PureComponent<Props, State
 
         const buttonClass = this.props.newSidebar ? 'SidebarChannelGroupHeader_addButton pull-right' : 'btn-old-sidebar';
 
+        // react-bootstrap supplies bsClass through defaultProps, which React 19 ignores on the
+        // forwardRef components. Without it Tooltip renders "-inner"/"-arrow" and matches no CSS.
+        const overlay = (
+            <Tooltip
+                id={this.props.id + '-tooltip'}
+                bsClass='tooltip'
+            >
+                {this.props.tooltip}
+            </Tooltip>
+        );
+
         return (
             <OverlayTrigger
                 key={this.props.id + '-overlay'}
                 placement='right'
-                overlay={<Tooltip id={this.props.id + '-tooltip'}>{this.props.tooltip}</Tooltip>}
+                overlay={overlay}
             >
                 <div className={'wrangler-left-sidebar-wrapper'}>
                     <div className={'wrangler-left-sidebar'}>
