@@ -12,17 +12,15 @@ import type {WranglerSettings} from '../support/plugin';
 import {loadSuite} from '../support/suite';
 import type {Suite} from '../support/suite';
 
+const ALLOWED = 'Wrangler plugin version:';
 const DENIED = 'Permission denied';
 
 let s: Suite;
 let regular: Client4;
 let domainUser: Client4;
 
-async function canRun(client: Client4, settings: WranglerSettings) {
-    return withSettings(s.admin, settings, async () => {
-        const text = await runCommand(client, s.fx.source.id, '/wrangler info');
-        return text.includes('Wrangler plugin version:') && !text.includes(DENIED);
-    });
+function runInfo(client: Client4, settings: WranglerSettings) {
+    return withSettings(s.admin, settings, () => runCommand(client, s.fx.source.id, '/wrangler info'));
 }
 
 test.describe.serial('Permissions', () => {
@@ -33,30 +31,30 @@ test.describe.serial('Permissions', () => {
     });
 
     test('system-admins: only admins may run commands', async () => {
-        expect(await canRun(s.admin, {permittedwranglerusers: 'system-admins'})).toBe(true);
-        expect(await canRun(regular, {permittedwranglerusers: 'system-admins'})).toBe(false);
-        expect(await canRun(domainUser, {permittedwranglerusers: 'system-admins'})).toBe(false);
+        expect(await runInfo(s.admin, {permittedwranglerusers: 'system-admins'})).toContain(ALLOWED);
+        expect(await runInfo(regular, {permittedwranglerusers: 'system-admins'})).toContain(DENIED);
+        expect(await runInfo(domainUser, {permittedwranglerusers: 'system-admins'})).toContain(DENIED);
     });
 
     test('system-admins-and-email-domain: allows matching domain only', async () => {
         const settings: WranglerSettings = {permittedwranglerusers: 'system-admins-and-email-domain', allowedemaildomain: DOMAIN};
-        expect(await canRun(s.admin, settings)).toBe(true);
-        expect(await canRun(domainUser, settings)).toBe(true);
-        expect(await canRun(regular, settings)).toBe(false);
+        expect(await runInfo(s.admin, settings)).toContain(ALLOWED);
+        expect(await runInfo(domainUser, settings)).toContain(ALLOWED);
+        expect(await runInfo(regular, settings)).toContain(DENIED);
     });
 
     test('allowed email domain supports lists and full addresses', async () => {
         const list: WranglerSettings = {permittedwranglerusers: 'system-admins-and-email-domain', allowedemaildomain: `example.org,${DOMAIN}`};
-        expect(await canRun(domainUser, list)).toBe(true);
+        expect(await runInfo(domainUser, list)).toContain(ALLOWED);
 
         const exact: WranglerSettings = {permittedwranglerusers: 'system-admins-and-email-domain', allowedemaildomain: `${USERNAMES.regular}@example.com`};
-        expect(await canRun(regular, exact)).toBe(true);
-        expect(await canRun(domainUser, exact)).toBe(false);
+        expect(await runInfo(regular, exact)).toContain(ALLOWED);
+        expect(await runInfo(domainUser, exact)).toContain(DENIED);
     });
 
     test('all-users: everyone may run commands', async () => {
-        expect(await canRun(regular, {permittedwranglerusers: 'all-users'})).toBe(true);
-        expect(await canRun(domainUser, {permittedwranglerusers: 'all-users'})).toBe(true);
+        expect(await runInfo(regular, {permittedwranglerusers: 'all-users'})).toContain(ALLOWED);
+        expect(await runInfo(domainUser, {permittedwranglerusers: 'all-users'})).toContain(ALLOWED);
     });
 
     test('command autocomplete follows CommandAutoCompleteEnable', async () => {
