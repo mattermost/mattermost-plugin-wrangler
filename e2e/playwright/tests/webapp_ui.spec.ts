@@ -1,198 +1,268 @@
 // Copyright (c) 2025-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import type {Client4} from '@mattermost/client';
 import {expect, test} from '@mattermost/playwright-lib';
-import type {PlaywrightExtended} from '@mattermost/playwright-lib';
-import type {Page} from '@playwright/test';
 
-import {PLUGIN_ID, USERNAMES} from '../support/constants';
+import {USERNAMES} from '../support/constants';
 import {createPost, createThread, findPostByMessage, getThreadMessages, isPostDeleted} from '../support/posts';
-import {loginFixtureUser as loginUser} from '../support/fixtures';
-import {withSettings} from '../support/plugin';
+import {loginFixtureUser} from '../support/fixtures';
+import {getUserPluginSettings, withSettings} from '../support/plugin';
 import {loadSuite} from '../support/suite';
 import type {Suite} from '../support/suite';
+import {openChannel} from '../support/ui';
 
 let s: Suite;
 
-async function openChannel(pw: PlaywrightExtended, channelName: string, team = s.fx.teamA.name, user: Suite['adminUser'] = s.adminUser) {
-    const {channelsPage, page} = await pw.testBrowser.login(user);
-    await channelsPage.goto(team, channelName);
-    await channelsPage.toBeVisible();
-    return {channelsPage, page};
-}
-
-// Plugin post menu items live in the "Message actions" menu, not the dot menu.
-async function openPostActionsMenu(page: Page, postId: string) {
-    const post = page.locator(`#post_${postId}`);
-    await expect(post).toBeVisible();
-    await post.hover();
-    await page.locator(`#CENTER_actions_button_${postId}`).click();
-}
-
-function menuItem(page: Page, name: string | RegExp) {
-    return page.getByRole('menuitem', {name, exact: true});
-}
-
-async function openMoreActions(page: Page) {
-    await page.locator('#channelHeaderDropdownButton').click();
-    await page.getByRole('menuitem', {name: 'More actions'}).hover();
-}
-
-async function pluginSettingsFor(client: Client4) {
-    const response = await fetch(`${client.getUrl()}/plugins/${PLUGIN_ID}/api/v1/settings`, {
-        headers: {Authorization: `Bearer ${client.getToken()}`, 'X-Requested-With': 'XMLHttpRequest'},
-    });
-    return response.json() as Promise<{enable_web_ui: boolean; enable_merge_thread: boolean}>;
-}
-
-test.describe.serial('Webapp UI', () => {
+test.describe('Webapp UI', () => {
     test.beforeAll(async () => {
         s = await loadSuite();
     });
 
-    test('hides the channel header action when the web UI is disabled', async ({pw}) => {
-        const {page} = await openChannel(pw, s.fx.source.name);
+    /**
+     * @objective Verify the channel header menu has no Wrangler actions while the web UI is disabled
+     */
+    test('hides the channel header action when the web UI is disabled', {tag: '@wrangler_ui'}, async ({pw}) => {
+        // # Open the channel header menu with default settings
+        const channel = await openChannel(pw, s, s.fx.source.name);
+        await channel.openChannelMenu();
 
-        await page.locator('#channelHeaderDropdownButton').click();
-        await expect(page.getByRole('menuitem', {name: 'View Info'})).toBeVisible();
-        await expect(page.getByRole('menuitem', {name: 'More actions'})).toHaveCount(0);
+        // * Verify the menu is open but has no "More actions" submenu
+        await expect(channel.menuItem('View Info')).toBeVisible();
+        await expect(channel.menuItem('More actions')).toHaveCount(0);
     });
 
-    test('channel header action enters and exits Channel Copy mode', async ({pw}) => {
+    /**
+     * @objective Verify Channel Copy mode can be entered from the channel header and exited from the sidebar banner
+     *
+     * @precondition
+     * Web UI is enabled
+     */
+    test('enters and exits Channel Copy mode from the channel header menu', {tag: '@wrangler_ui'}, async ({pw}) => {
         await withSettings(s.admin, {enablewebui: true}, async () => {
-            const {page} = await openChannel(pw, s.fx.target.name);
+            // # Choose "Copy Messages to Channel" from the channel header
+            const channel = await openChannel(pw, s, s.fx.target.name);
+            await channel.openChannelMoreActions();
+            await channel.menuItem('Copy Messages to Channel').click();
 
-            await openMoreActions(page);
-            await page.getByRole('menuitem', {name: 'Copy Messages to Channel'}).click();
-            await expect(page.getByText('Channel Copy', {exact: true})).toBeVisible();
+            // * Verify the Channel Copy banner is shown
+            await expect(channel.banner.label('Channel Copy')).toBeVisible();
 
-            await page.getByRole('button', {name: 'Exit Wrangler Mode'}).click();
-            await expect(page.getByText('Channel Copy')).toBeHidden();
+            // # Exit Wrangler mode
+            await channel.banner.exit();
+
+            // * Verify the banner is gone
+            await expect(channel.banner.label('Channel Copy')).toBeHidden();
         });
     });
 
-    test('settings endpoint reflects web UI and merge settings per user', async () => {
-        const {client: regular} = await loginUser(USERNAMES.regular);
+    /**
+     * @objective Verify the settings endpoint only exposes web UI and merge flags to permitted users
+     *
+     * @precondition
+     * Web UI and merging are enabled
+     */
+    test('returns per-user web UI and merge flags from the settings endpoint', {tag: '@wrangler_ui'}, async () => {
+        const {client: regular} = await loginFixtureUser(USERNAMES.regular);
+
         await withSettings(s.admin, {enablewebui: true, mergethreadenable: true, permittedwranglerusers: 'system-admins'}, async () => {
-            expect(await pluginSettingsFor(s.admin)).toEqual({enable_web_ui: true, enable_merge_thread: true});
-            expect(await pluginSettingsFor(regular)).toEqual({enable_web_ui: false, enable_merge_thread: false});
+            // # Request settings as an admin and as a regular user while only admins are permitted
+            const adminSettings = await getUserPluginSettings(s.admin);
+            const regularSettings = await getUserPluginSettings(regular);
+
+            // * Verify only the admin sees the flags enabled
+            expect(adminSettings).toEqual({enable_web_ui: true, enable_merge_thread: true});
+            expect(regularSettings).toEqual({enable_web_ui: false, enable_merge_thread: false});
         });
 
         await withSettings(s.admin, {enablewebui: true, permittedwranglerusers: 'all-users'}, async () => {
-            expect(await pluginSettingsFor(regular)).toEqual({enable_web_ui: true, enable_merge_thread: false});
+            // # Request settings as a regular user while all users are permitted
+            const regularSettings = await getUserPluginSettings(regular);
+
+            // * Verify the regular user now sees the web UI enabled
+            expect(regularSettings).toEqual({enable_web_ui: true, enable_merge_thread: false});
         });
     });
 
-    test('moves a thread through the post menu modal', async ({pw}) => {
+    /**
+     * @objective Verify a thread can be moved to another channel through the post menu modal
+     *
+     * @precondition
+     * Web UI is enabled
+     */
+    test('moves a thread through the post menu modal', {tag: '@wrangler_ui'}, async ({pw}) => {
         const {root} = await createThread(s.admin, s.fx.source.id, 1, 'ui-move');
 
         await withSettings(s.admin, {enablewebui: true}, async () => {
-            const {page} = await openChannel(pw, s.fx.source.name);
-            await openPostActionsMenu(page, root.id);
+            // # Open the move modal from the thread root's Message actions menu
+            const channel = await openChannel(pw, s, s.fx.source.name);
+            await channel.openPostActions(root.id);
+
             // The webapp labels threads by the replies loaded into Redux, which collapsed
             // reply threads leave out of the channel view, so either label can show.
-            await menuItem(page, /^Move\/Copy (Message|Thread)$/).click();
+            await channel.menuItem(/^Move\/Copy (Message|Thread)$/).click();
 
-            await expect(page.getByRole('heading', {name: /^Wrangler - Move (Message|Thread) to Another Channel$/})).toBeVisible();
-            await page.locator('#wrangler-team-select').selectOption({label: s.fx.teamA.display_name});
-            await page.locator('#wrangler-channel-select').selectOption({value: s.fx.target.id});
-            await page.locator('#saveSetting').click();
-            await expect(page.locator('#saveSetting')).toBeHidden();
+            // * Verify the move modal opens
+            await expect(channel.modal.heading).toHaveText(/^Wrangler - Move /);
+
+            // # Move the thread to the target channel
+            await channel.modal.submitTo(s.fx.teamA.display_name, s.fx.target.id);
+
+            // * Verify the modal closes
+            await channel.modal.toBeHidden();
         });
 
+        // * Verify the thread now lives in the target channel
         await expect.poll(() => isPostDeleted(s.admin, root.id)).toBe(true);
         const moved = await findPostByMessage(s.admin, s.fx.target.id, root.message);
         expect(moved).toBeDefined();
         expect((await getThreadMessages(s.admin, moved!.id))?.length).toBeGreaterThanOrEqual(2);
     });
 
-    test('copies a message through the post menu modal', async ({pw}) => {
+    /**
+     * @objective Verify a message can be copied to another channel through the post menu modal
+     *
+     * @precondition
+     * Web UI is enabled
+     */
+    test('copies a message through the post menu modal', {tag: '@wrangler_ui'}, async ({pw}) => {
         const root = await createPost(s.admin, s.fx.source.id, 'ui-copy');
 
         await withSettings(s.admin, {enablewebui: true}, async () => {
-            const {page} = await openChannel(pw, s.fx.source.name);
-            await openPostActionsMenu(page, root.id);
-            await menuItem(page, 'Move/Copy Message').click();
+            // # Open the modal and switch it to Copy
+            const channel = await openChannel(pw, s, s.fx.source.name);
+            await channel.openPostActions(root.id);
+            await channel.menuItem('Move/Copy Message').click();
+            await channel.modal.copyOption.check();
 
-            await page.getByLabel('Copy', {exact: true}).check();
-            await expect(page.getByRole('heading', {name: 'Wrangler - Copy Message to Another Channel'})).toBeVisible();
-            await page.locator('#wrangler-team-select').selectOption({label: s.fx.teamA.display_name});
-            await page.locator('#wrangler-channel-select').selectOption({value: s.fx.target.id});
-            await page.locator('#saveSetting').click();
-            await expect(page.locator('#saveSetting')).toBeHidden();
+            // * Verify the modal is in Copy mode
+            await expect(channel.modal.heading).toHaveText('Wrangler - Copy Message to Another Channel');
+
+            // # Copy the message to the target channel
+            await channel.modal.submitTo(s.fx.teamA.display_name, s.fx.target.id);
+
+            // * Verify the modal closes
+            await channel.modal.toBeHidden();
         });
 
+        // * Verify the copy exists and the original is kept
         await expect.poll(async () => findPostByMessage(s.admin, s.fx.target.id, root.message)).toBeDefined();
         expect(await isPostDeleted(s.admin, root.id)).toBe(false);
     });
 
-    test('attaches a message to a thread through Wrangler mode', async ({pw}) => {
+    /**
+     * @objective Verify a standalone message can be attached to a thread through Wrangler mode
+     *
+     * @precondition
+     * Web UI is enabled
+     */
+    test('attaches a message to a thread through Wrangler mode', {tag: '@wrangler_ui'}, async ({pw}) => {
         const {root} = await createThread(s.admin, s.fx.source.id, 0, 'ui-attach-root');
         const loose = await createPost(s.admin, s.fx.source.id, 'ui-attach-loose');
 
         await withSettings(s.admin, {enablewebui: true}, async () => {
-            const {page} = await openChannel(pw, s.fx.source.name);
+            // # Start attaching the standalone message
+            const channel = await openChannel(pw, s, s.fx.source.name);
+            await channel.openPostActions(loose.id);
+            await channel.menuItem('Attach to Thread').click();
 
-            await openPostActionsMenu(page, loose.id);
-            await menuItem(page, 'Attach to Thread').click();
-            await expect(page.getByText('Attaching Message', {exact: true})).toBeVisible();
+            // * Verify the Attaching Message banner is shown
+            await expect(channel.banner.label('Attaching Message')).toBeVisible();
 
-            await openPostActionsMenu(page, root.id);
-            await menuItem(page, 'Attach to this Thread').click();
-            await expect(page.getByText('Attaching Message')).toBeHidden();
+            // # Pick the target thread
+            await channel.openPostActions(root.id);
+            await channel.menuItem('Attach to this Thread').click();
+
+            // * Verify Wrangler mode ends
+            await expect(channel.banner.label('Attaching Message')).toBeHidden();
         });
 
+        // * Verify the message was attached to the thread
         await expect.poll(async () => (await findPostByMessage(s.admin, s.fx.source.id, loose.message))?.root_id).toBe(root.id);
     });
 
-    test('exits Wrangler mode with the close button', async ({pw}) => {
+    /**
+     * @objective Verify the sidebar close button cancels Wrangler mode without changing the message
+     *
+     * @precondition
+     * Web UI is enabled
+     */
+    test('exits Wrangler mode with the close button', {tag: '@wrangler_ui'}, async ({pw}) => {
         const loose = await createPost(s.admin, s.fx.source.id, 'ui-exit');
 
         await withSettings(s.admin, {enablewebui: true}, async () => {
-            const {page} = await openChannel(pw, s.fx.source.name);
-            await openPostActionsMenu(page, loose.id);
-            await menuItem(page, 'Attach to Thread').click();
-            await expect(page.getByText('Attaching Message', {exact: true})).toBeVisible();
+            // # Enter attach mode
+            const channel = await openChannel(pw, s, s.fx.source.name);
+            await channel.openPostActions(loose.id);
+            await channel.menuItem('Attach to Thread').click();
 
-            await page.getByRole('button', {name: 'Exit Wrangler Mode'}).click();
-            await expect(page.getByText('Attaching Message')).toBeHidden();
+            // * Verify the Attaching Message banner is shown
+            await expect(channel.banner.label('Attaching Message')).toBeVisible();
+
+            // # Exit Wrangler mode
+            await channel.banner.exit();
+
+            // * Verify the banner is gone
+            await expect(channel.banner.label('Attaching Message')).toBeHidden();
         });
 
+        // * Verify the message was not changed
         expect(await isPostDeleted(s.admin, loose.id)).toBe(false);
     });
 
-    test('merge mode replaces the attach menu item', async ({pw}) => {
+    /**
+     * @objective Verify the post menu offers merging instead of attaching when merging is enabled
+     *
+     * @precondition
+     * Web UI and merging are enabled
+     */
+    test('replaces the attach menu item with merge when merging is enabled', {tag: '@wrangler_ui'}, async ({pw}) => {
         const {root} = await createThread(s.admin, s.fx.source.id, 0, 'ui-merge');
 
         await withSettings(s.admin, {enablewebui: true, mergethreadenable: true}, async () => {
-            const {page} = await openChannel(pw, s.fx.source.name);
-            await openPostActionsMenu(page, root.id);
-            await expect(menuItem(page, 'Merge to thread')).toBeVisible();
-            await expect(menuItem(page, 'Attach to Thread')).toHaveCount(0);
+            // # Open the thread root's Message actions menu
+            const channel = await openChannel(pw, s, s.fx.source.name);
+            await channel.openPostActions(root.id);
 
-            await menuItem(page, 'Merge to thread').click();
-            await expect(page.getByText('Merging Thread', {exact: true})).toBeVisible();
-            await page.getByRole('button', {name: 'Exit Wrangler Mode'}).click();
+            // * Verify merge is offered instead of attach
+            await expect(channel.menuItem('Merge to thread')).toBeVisible();
+            await expect(channel.menuItem('Attach to Thread')).toHaveCount(0);
+
+            // # Enter merge mode
+            await channel.menuItem('Merge to thread').click();
+
+            // * Verify the Merging Thread banner is shown
+            await expect(channel.banner.label('Merging Thread')).toBeVisible();
+
+            // # Exit Wrangler mode
+            await channel.banner.exit();
         });
     });
 
-    test('copies messages into a channel from the channel header menu', async ({pw}) => {
+    /**
+     * @objective Verify messages from another channel can be copied into a channel chosen from its header menu
+     *
+     * @precondition
+     * Web UI is enabled
+     */
+    test('copies messages into a channel from the channel header menu', {tag: '@wrangler_ui'}, async ({pw}) => {
         const original = await createPost(s.admin, s.fx.source.id, 'ui-channel-copy');
 
         await withSettings(s.admin, {enablewebui: true}, async () => {
-            const {page} = await openChannel(pw, s.fx.target.name);
+            // # Enter Channel Copy mode from the target channel's header
+            const channel = await openChannel(pw, s, s.fx.target.name);
+            await channel.openChannelMoreActions();
+            await channel.menuItem('Copy Messages to Channel').click();
 
-            await openMoreActions(page);
-            await page.getByRole('menuitem', {name: 'Copy Messages to Channel'}).click();
-            await expect(page.getByText('Channel Copy', {exact: true})).toBeVisible();
+            // * Verify the Channel Copy banner is shown
+            await expect(channel.banner.label('Channel Copy')).toBeVisible();
 
-            // Navigate in-app; a full page load would reset the Wrangler mode state.
-            await page.locator(`#sidebarItem_${s.fx.source.name}`).click();
-            await openPostActionsMenu(page, original.id);
-            await menuItem(page, 'Copy to Channel').click();
+            // # Copy a message from the source channel
+            await channel.switchToChannel(s.fx.source.name);
+            await channel.openPostActions(original.id);
+            await channel.menuItem('Copy to Channel').click();
         });
 
+        // * Verify the message was copied into the target channel
         await expect.poll(async () => findPostByMessage(s.admin, s.fx.target.id, original.message)).toBeDefined();
     });
 });

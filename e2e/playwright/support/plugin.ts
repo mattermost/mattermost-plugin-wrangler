@@ -116,6 +116,14 @@ export function resetPluginSettings(client: Client4) {
     return patchPluginSettings(client, DEFAULT_SETTINGS);
 }
 
+// getUserPluginSettings returns the web UI flags the plugin exposes to the given user.
+export async function getUserPluginSettings(client: Client4) {
+    const response = await fetch(`${client.getUrl()}/plugins/${PLUGIN_ID}/api/v1/settings`, {
+        headers: {Authorization: `Bearer ${client.getToken()}`, 'X-Requested-With': 'XMLHttpRequest'},
+    });
+    return response.json() as Promise<{enable_web_ui: boolean; enable_merge_thread: boolean}>;
+}
+
 // withSettings applies a settings patch for the duration of fn, then restores defaults.
 export async function withSettings<T>(client: Client4, patch: WranglerSettings, fn: () => Promise<T>): Promise<T> {
     await patchPluginSettings(client, {...DEFAULT_SETTINGS, ...patch});

@@ -29,4 +29,4 @@ e2e-env-down:
 ## Builds the plugin and runs the Playwright E2E suite against PW_BASE_URL (default http://localhost:8065).
 .PHONY: e2e
 e2e: dist $(E2E_DIR)/node_modules
-	cd $(E2E_DIR) && npm run tsc && npm test
+	cd $(E2E_DIR) && npm run tsc && npm run lint:test-docs && npm test

@@ -8,7 +8,8 @@
     "show-report": "playwright show-report results/reporter",
     "server:up": "docker compose up -d --wait",
     "server:down": "docker compose down -v",
-    "tsc": "tsc --noEmit"
+    "tsc": "tsc --noEmit",
+    "lint:test-docs": "node scripts/lint-test-docs.js"
   },
   "devDependencies": {
     "@mattermost/client": "11.4.0",

@@ -29,6 +29,15 @@ On a Linux host without Chromium's system libraries, run `npx playwright install
 
 Most command specs execute the slash command through the API (`runCommand`) and assert on the response and server state; `webapp_ui.spec.ts` drives the real UI.
 
+## Writing specs
+
+Specs follow the [Mattermost Playwright guidelines](https://github.com/mattermost/mattermost/blob/master/e2e-tests/playwright/CLAUDE.OPTIONAL.md):
+
+- Use the library's page objects and the Wrangler ones in `support/ui.ts`; keep selectors out of spec files and prefer role, text and label locators.
+- Give each test an action-oriented title, a `{tag: '@wrangler_…'}` tag, a JSDoc block with `@objective` (and `@precondition` when settings differ from the defaults), and `// #` action / `// *` verification comments.
+
+`npm run lint:test-docs` checks the documentation format and runs as part of `make e2e`.
+
 ## Environment
 
 | Variable | Default |
