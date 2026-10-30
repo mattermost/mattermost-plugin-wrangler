@@ -148,4 +148,4 @@ make e2e           # build the plugin, install deps, run the suite
 make e2e-env-down  # stop and wipe the server
 ```
 
-See [`e2e/playwright/README.md`](e2e/playwright/README.md) for details.
+The [`e2e`](.github/workflows/e2e.yml) workflow runs the same targets on every pull request. See [`e2e/playwright/README.md`](e2e/playwright/README.md) for details.

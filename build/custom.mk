@@ -7,11 +7,6 @@ LDFLAGS += -X "main.BuildDate=$(BUILD_DATE)"
 LDFLAGS += -X "main.BuildHash=$(BUILD_HASH)"
 LDFLAGS += -X "main.BuildHashShort=$(BUILD_HASH_SHORT)"
 
-# macOS bsdtar embeds xattr headers that the Mattermost server rejects on upload.
-ifeq ($(shell uname -s),Darwin)
-TAR_FLAGS = --no-xattrs --no-mac-metadata
-endif
-
 E2E_DIR = e2e/playwright
 
 # Keep the pre-existing default goal; the first rule below would otherwise become it.
