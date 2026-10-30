@@ -18,3 +18,7 @@ server/manifest.go
 
 # VS Code
 .vscode
+
+# E2E / Cursor cloud agent
+e2e/playwright/results
+.cursor/AGENTS.md

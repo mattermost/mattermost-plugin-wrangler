@@ -1,0 +1,4 @@
+node_modules
+results
+.env
+storage_state/*.json
