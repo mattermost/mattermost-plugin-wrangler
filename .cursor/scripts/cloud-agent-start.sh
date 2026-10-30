@@ -10,8 +10,8 @@ cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
 # Materialize cloud-only AGENTS.md from the committed cursor.md.
 if [ -f .cursor/cursor.md ]; then
-  cp .cursor/cursor.md .cursor/AGENTS.md
-  log "Materialized Cloud Agent instructions at .cursor/AGENTS.md"
+  cp .cursor/cursor.md AGENTS.md
+  log "Materialized Cloud Agent instructions at AGENTS.md"
 fi
 
 if ! command -v docker >/dev/null 2>&1; then

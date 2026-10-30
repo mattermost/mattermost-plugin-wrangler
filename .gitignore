@@ -21,4 +21,4 @@ server/manifest.go
 
 # E2E / Cursor cloud agent
 e2e/playwright/results
-.cursor/AGENTS.md
+/AGENTS.md

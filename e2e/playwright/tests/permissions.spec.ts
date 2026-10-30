@@ -19,7 +19,10 @@ let regular: Client4;
 let domainUser: Client4;
 
 async function canRun(client: Client4, settings: WranglerSettings) {
-    return withSettings(s.admin, settings, async () => !(await runCommand(client, s.fx.source.id, '/wrangler info')).includes(DENIED));
+    return withSettings(s.admin, settings, async () => {
+        const text = await runCommand(client, s.fx.source.id, '/wrangler info');
+        return text.includes('Wrangler plugin version:') && !text.includes(DENIED);
+    });
 }
 
 test.describe.serial('Permissions', () => {

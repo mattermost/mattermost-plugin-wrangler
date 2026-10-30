@@ -5,10 +5,10 @@ Checked-in environment for Cursor Cloud Agents working on **mattermost-plugin-wr
 - `environment.json`: Dockerfile build, install/start scripts, port `8065` (Mattermost)
 - `Dockerfile`: Ubuntu 24.04 with Docker-in-Docker, Go 1.24, Node 20, golangci-lint, Playwright Chromium libraries, and prepulled Mattermost EE 12.0 and Postgres 16 images
 - `scripts/cloud-agent-install.sh`: `go mod download`, `npm ci` for `webapp/` and `e2e/playwright/`, Playwright Chromium
-- `scripts/cloud-agent-start.sh`: starts `dockerd`, optional Docker Hub login, loads the prepulled images, materializes `.cursor/AGENTS.md`
+- `scripts/cloud-agent-start.sh`: starts `dockerd`, optional Docker Hub login, loads the prepulled images, materializes `AGENTS.md`
 - `cursor.md`: cloud-only runbook for the E2E suite
 
-`.cursor/AGENTS.md` is generated at startup from `cursor.md` and is not committed.
+The repo-root `AGENTS.md` is generated at startup from `cursor.md` and is not committed.
 
 ## Validation
 

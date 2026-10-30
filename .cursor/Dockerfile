@@ -7,6 +7,7 @@ ARG NODE_VERSION=20.11.1
 ARG GO_VERSION=1.24.13
 ARG DOCKER_VERSION=28.5.2
 ARG DOCKER_COMPOSE_VERSION=v2.40.3
+ARG DOCKER_BUILDX_VERSION=v0.38.1
 ARG GOLANGCI_LINT_VERSION=v2.1.6
 ARG MATTERMOST_IMAGE=mattermost/mattermost-enterprise-edition
 ARG MATTERMOST_IMAGE_TAG=12.0
@@ -78,6 +79,8 @@ RUN set -eux; \
     mkdir -p /usr/local/lib/docker/cli-plugins; \
     curl -fsSL "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-linux-${compose_arch}" -o /usr/local/lib/docker/cli-plugins/docker-compose; \
     chmod +x /usr/local/lib/docker/cli-plugins/docker-compose; \
+    curl -fsSL "https://github.com/docker/buildx/releases/download/${DOCKER_BUILDX_VERSION}/buildx-${DOCKER_BUILDX_VERSION}.linux-${go_arch}" -o /usr/local/lib/docker/cli-plugins/docker-buildx; \
+    chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx; \
     curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${node_arch}.tar.xz" -o /tmp/node.tar.xz; \
     mkdir -p /usr/local/node; \
     tar -xJf /tmp/node.tar.xz -C /usr/local/node --strip-components=1; \
@@ -87,8 +90,11 @@ RUN set -eux; \
     for bin in node npm npx; do ln -sf /usr/local/node/bin/$bin /usr/local/bin/$bin; done; \
     for bin in go gofmt; do ln -sf /usr/local/go/bin/$bin /usr/local/bin/$bin; done; \
     mkdir -p /opt/cursor-prepulled; \
-    skopeo copy --retry-times 3 --override-os linux --override-arch amd64 "docker://${MATTERMOST_IMAGE}:${MATTERMOST_IMAGE_TAG}" "docker-archive:/opt/cursor-prepulled/mattermost-enterprise-edition.tar:${MATTERMOST_IMAGE}:${MATTERMOST_IMAGE_TAG}"; \
-    skopeo copy --retry-times 3 --override-os linux --override-arch "${go_arch}" "docker://${POSTGRES_IMAGE}:${POSTGRES_IMAGE_TAG}" "docker-archive:/opt/cursor-prepulled/postgres.tar:${POSTGRES_IMAGE}:${POSTGRES_IMAGE_TAG}"; \
+    # Best effort: cloud-agent-start.sh pulls any image whose archive is missing.
+    skopeo copy --retry-times 3 --override-os linux --override-arch amd64 "docker://${MATTERMOST_IMAGE}:${MATTERMOST_IMAGE_TAG}" "docker-archive:/opt/cursor-prepulled/mattermost-enterprise-edition.tar:${MATTERMOST_IMAGE}:${MATTERMOST_IMAGE_TAG}" \
+        || { echo "WARN: could not prepull ${MATTERMOST_IMAGE}:${MATTERMOST_IMAGE_TAG}" >&2; rm -f /opt/cursor-prepulled/mattermost-enterprise-edition.tar; }; \
+    skopeo copy --retry-times 3 --override-os linux --override-arch "${go_arch}" "docker://${POSTGRES_IMAGE}:${POSTGRES_IMAGE_TAG}" "docker-archive:/opt/cursor-prepulled/postgres.tar:${POSTGRES_IMAGE}:${POSTGRES_IMAGE_TAG}" \
+        || { echo "WARN: could not prepull ${POSTGRES_IMAGE}:${POSTGRES_IMAGE_TAG}" >&2; rm -f /opt/cursor-prepulled/postgres.tar; }; \
     rm -rf /tmp/docker /tmp/docker.tgz /tmp/node.tar.xz /tmp/go.tar.gz
 
 RUN groupadd -f docker \

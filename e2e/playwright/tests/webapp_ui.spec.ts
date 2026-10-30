@@ -65,7 +65,7 @@ test.describe.serial('Webapp UI', () => {
 
             await openMoreActions(page);
             await page.getByRole('menuitem', {name: 'Copy Messages to Channel'}).click();
-            await expect(page.getByText('Channel Copy')).toBeVisible();
+            await expect(page.getByText('Channel Copy', {exact: true})).toBeVisible();
 
             await page.getByRole('button', {name: 'Exit Wrangler Mode'}).click();
             await expect(page.getByText('Channel Copy')).toBeHidden();
@@ -136,7 +136,7 @@ test.describe.serial('Webapp UI', () => {
 
             await openPostActionsMenu(page, loose.id);
             await menuItem(page, 'Attach to Thread').click();
-            await expect(page.getByText('Attaching Message')).toBeVisible();
+            await expect(page.getByText('Attaching Message', {exact: true})).toBeVisible();
 
             await openPostActionsMenu(page, root.id);
             await menuItem(page, 'Attach to this Thread').click();
@@ -153,7 +153,7 @@ test.describe.serial('Webapp UI', () => {
             const {page} = await openChannel(pw, s.fx.source.name);
             await openPostActionsMenu(page, loose.id);
             await menuItem(page, 'Attach to Thread').click();
-            await expect(page.getByText('Attaching Message')).toBeVisible();
+            await expect(page.getByText('Attaching Message', {exact: true})).toBeVisible();
 
             await page.getByRole('button', {name: 'Exit Wrangler Mode'}).click();
             await expect(page.getByText('Attaching Message')).toBeHidden();
@@ -172,7 +172,7 @@ test.describe.serial('Webapp UI', () => {
             await expect(menuItem(page, 'Attach to Thread')).toHaveCount(0);
 
             await menuItem(page, 'Merge to thread').click();
-            await expect(page.getByText('Merging Thread')).toBeVisible();
+            await expect(page.getByText('Merging Thread', {exact: true})).toBeVisible();
             await page.getByRole('button', {name: 'Exit Wrangler Mode'}).click();
         });
     });
@@ -185,7 +185,7 @@ test.describe.serial('Webapp UI', () => {
 
             await openMoreActions(page);
             await page.getByRole('menuitem', {name: 'Copy Messages to Channel'}).click();
-            await expect(page.getByText('Channel Copy')).toBeVisible();
+            await expect(page.getByText('Channel Copy', {exact: true})).toBeVisible();
 
             // Navigate in-app; a full page load would reset the Wrangler mode state.
             await page.locator(`#sidebarItem_${s.fx.source.name}`).click();
