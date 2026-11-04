@@ -1,0 +1,54 @@
+# Disposable Mattermost server for the Wrangler plugin E2E suite.
+#   npm run server:up    # start and wait until healthy (http://localhost:8065)
+#   npm run server:down  # stop and wipe all data
+name: wrangler-e2e
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mmuser
+      POSTGRES_PASSWORD: mostest
+      POSTGRES_DB: mattermost_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mmuser -d mattermost_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mattermost:
+    # Must satisfy plugin.json's min_server_version. Only amd64 images are
+    # published; on Apple silicon Docker Desktop runs them under emulation.
+    image: ${MM_IMAGE:-mattermost/mattermost-enterprise-edition:12.0}
+    platform: linux/amd64
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8065:8065"
+    environment:
+      MM_SQLSETTINGS_DRIVERNAME: postgres
+      MM_SQLSETTINGS_DATASOURCE: postgres://mmuser:mostest@postgres:5432/mattermost_test?sslmode=disable&connect_timeout=10
+      MM_SERVICESETTINGS_SITEURL: http://localhost:8065
+      MM_SERVICESETTINGS_ENABLEONBOARDINGFLOW: "false"
+      MM_SERVICESETTINGS_ENABLETUTORIAL: "false"
+      MM_SERVICESETTINGS_ENABLESECURITYFIXALERT: "false"
+      MM_SERVICESETTINGS_ENABLEPOSTUSERNAMEOVERRIDE: "true"
+      MM_PLUGINSETTINGS_ENABLE: "true"
+      MM_PLUGINSETTINGS_ENABLEUPLOADS: "true"
+      MM_PLUGINSETTINGS_AUTOMATICPREPACKAGEDPLUGINS: "false"
+      MM_RATELIMITSETTINGS_ENABLE: "false"
+      MM_ANNOUNCEMENTSETTINGS_ADMINNOTICESENABLED: "false"
+      MM_ANNOUNCEMENTSETTINGS_USERNOTICESENABLED: "false"
+      MM_TEAMSETTINGS_ENABLEOPENSERVER: "true"
+      MM_EMAILSETTINGS_REQUIREEMAILVERIFICATION: "false"
+      MM_LOGSETTINGS_CONSOLELEVEL: INFO
+      # The image is distroless (no shell/curl), so the healthcheck pings the
+      # server through mmctl over the local-mode socket.
+      MM_SERVICESETTINGS_ENABLELOCALMODE: "true"
+    healthcheck:
+      test: ["CMD", "/mattermost/bin/mmctl", "--local", "system", "status"]
+      interval: 5s
+      timeout: 10s
+      retries: 60
+      start_period: 20s
