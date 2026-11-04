@@ -40,6 +40,7 @@ export type Fixtures = {
     target: Channel;
     teamBChannel: Channel;
     privateChannel: Channel;
+    restrictedChannel: Channel;
     users: {regular: UserProfile; domain: UserProfile; other: UserProfile};
 };
 
@@ -66,6 +67,9 @@ export async function ensureFixtures(admin: Client4): Promise<Fixtures> {
     const teamBChannel = await ensureChannel(admin, teamB, CHANNELS.teamB, 'O');
     const privateChannel = await ensureChannel(admin, teamA, CHANNELS.private, 'P');
 
+    // Private channel only the admin belongs to; left out of the membership loop below.
+    const restrictedChannel = await ensureChannel(admin, teamA, CHANNELS.restricted, 'P');
+
     const adminProfile = await admin.getMe();
     for (const channel of [source, target, teamBChannel, privateChannel]) {
         for (const user of [adminProfile, ...Object.values(users)]) {
@@ -74,7 +78,7 @@ export async function ensureFixtures(admin: Client4): Promise<Fixtures> {
         }
     }
 
-    return {teamA, teamB, source, target, teamBChannel, privateChannel, users};
+    return {teamA, teamB, source, target, teamBChannel, privateChannel, restrictedChannel, users};
 }
 
 export function loginFixtureUser(username: string) {

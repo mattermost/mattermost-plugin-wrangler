@@ -1,7 +1,8 @@
 // Copyright (c) 2025-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import {expect, test} from '@mattermost/playwright-lib';
+import type {Client4} from '@mattermost/client';
+import {expect, test, testConfig} from '@mattermost/playwright-lib';
 
 import {DEFAULT_MESSAGES, USERNAMES} from '../support/constants';
 import {postLinkId, runCommand} from '../support/commands';
@@ -12,10 +13,12 @@ import {loadSuite} from '../support/suite';
 import type {Suite} from '../support/suite';
 
 let s: Suite;
+let regular: Client4;
 
 test.describe('Move thread', () => {
     test.beforeAll(async () => {
         s = await loadSuite();
+        regular = (await loginFixtureUser(USERNAMES.regular)).client;
     });
 
     /**
@@ -45,7 +48,7 @@ test.describe('Move thread', () => {
      */
     test('moves a thread by permalink', {tag: '@wrangler_move'}, async () => {
         const {root} = await createThread(s.admin, s.fx.source.id, 0, 'move-link');
-        const link = `http://localhost:8065/${s.fx.teamA.name}/pl/${root.id}`;
+        const link = `${testConfig.baseURL}/${s.fx.teamA.name}/pl/${root.id}`;
 
         // # Move the thread by permalink
         const text = await runCommand(s.admin, s.fx.source.id, `/wrangler move thread ${link} ${s.fx.target.id}`);
@@ -124,6 +127,42 @@ test.describe('Move thread', () => {
         // * Verify the summary omits the root message
         expect(text).toContain('has been moved');
         expect(text).not.toContain('Original Thread Root Message');
+    });
+
+    /**
+     * @objective Verify a non-admin user can move a thread they can read into a channel they belong to
+     *
+     * @precondition
+     * PermittedWranglerUsers is all-users
+     */
+    test('lets a regular user move a thread into a channel they are a member of', {tag: '@wrangler_move'}, async () => {
+        const {root} = await createThread(regular, s.fx.source.id, 1, 'move-regular');
+
+        // # Move the thread as a regular user
+        const text = await withSettings(s.admin, {permittedwranglerusers: 'all-users'}, () => runCommand(regular, s.fx.source.id, `/wrangler move thread ${root.id} ${s.fx.target.id}`));
+
+        // * Verify the move succeeded and the thread now lives in the target channel
+        expect(text).toContain('has been moved');
+        expect(await isPostDeleted(s.admin, root.id)).toBe(true);
+        expect(await findPostByMessage(s.admin, s.fx.target.id, root.message)).toBeDefined();
+    });
+
+    /**
+     * @objective Verify a non-admin user cannot move a thread into a private channel they are not a member of
+     *
+     * @precondition
+     * PermittedWranglerUsers is all-users
+     */
+    test('blocks a regular user from moving into a private channel they are not in', {tag: '@wrangler_move'}, async () => {
+        const {root} = await createThread(regular, s.fx.source.id, 0, 'move-regular-denied');
+
+        // # Move the thread as a regular user into the admin-only private channel
+        const text = await withSettings(s.admin, {permittedwranglerusers: 'all-users'}, () => runCommand(regular, s.fx.source.id, `/wrangler move thread ${root.id} ${s.fx.restrictedChannel.id}`));
+
+        // * Verify the move is rejected and nothing was moved
+        expect(text).toContain('not a member');
+        expect(await isPostDeleted(s.admin, root.id)).toBe(false);
+        expect(await findPostByMessage(s.admin, s.fx.restrictedChannel.id, root.message)).toBeUndefined();
     });
 
     /**

@@ -11,6 +11,7 @@ export const CHANNELS = {
     target: 'wrangler-target',
     teamB: 'wrangler-team-b',
     private: 'wrangler-private',
+    restricted: 'wrangler-restricted',
 };
 
 export const PASSWORD = 'Wrangl3r-e2e-pass!';

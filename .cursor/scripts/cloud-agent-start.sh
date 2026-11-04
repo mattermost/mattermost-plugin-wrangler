@@ -8,12 +8,6 @@ log() { printf '[cloud-agent-start] %s\n' "$*" >&2; }
 
 cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
-# Materialize cloud-only AGENTS.md from the committed cursor.md.
-if [ -f .cursor/cursor.md ]; then
-  cp .cursor/cursor.md AGENTS.md
-  log "Materialized Cloud Agent instructions at AGENTS.md"
-fi
-
 if ! command -v docker >/dev/null 2>&1; then
   log "Docker CLI is missing; the image did not build from .cursor/Dockerfile"
   exit 1
