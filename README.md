@@ -137,3 +137,15 @@ Q: Is there a way to undo the message action I just took?
 
 A: No. If you moved a thread then moving it back should be simple enough, but there is no way to directly undo the actions that Wrangler takes.
 
+
+## E2E tests
+
+A Playwright suite in [`e2e/playwright`](e2e/playwright) runs the plugin against a disposable Mattermost server in Docker.
+
+```sh
+make e2e-env-up    # Mattermost 12.0 + Postgres on :8065
+make e2e           # build the plugin, install deps, run the suite
+make e2e-env-down  # stop and wipe the server
+```
+
+The [`e2e`](.github/workflows/e2e.yml) workflow runs the same targets on every pull request. See [`e2e/playwright/README.md`](e2e/playwright/README.md) for details.
