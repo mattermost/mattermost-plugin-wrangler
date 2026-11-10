@@ -194,7 +194,7 @@ export function attachMessage(postToBeAttachedID: string, postToAttachToID: stri
 export function mergeThread(postToBeMergedID: string, postToMergeToID: string): ActionFunc {
     return async (dispatch: DispatchFunc, getState: GetStateFunc) => {
         const command = `/wrangler merge thread ${postToBeMergedID} ${postToMergeToID}`;
-        await Client.clientExecuteCommand(getState, command, postToBeMergedID);
+        await Client.clientExecuteCommand(getState, command, postToMergeToID);
 
         return {data: null};
     };
