@@ -1,6 +1,7 @@
 import {GlobalState} from '@mattermost/types/store';
 import {Client4} from 'mattermost-redux/client';
-import {getCurrentChannel} from 'mattermost-redux/selectors/entities/channels';
+import {getChannel, getCurrentChannel} from 'mattermost-redux/selectors/entities/channels';
+import {getPost} from 'mattermost-redux/selectors/entities/posts';
 import {getCurrentTeamId} from 'mattermost-redux/selectors/entities/teams';
 
 import id from '../plugin_id';
@@ -51,13 +52,23 @@ export default class Client {
         };
     };
 
-    clientExecuteCommand = async (getState: GetStateFunc, command: string) => {
-        const currentChannel = getCurrentChannel(getState());
-        const currentTeamId = getCurrentTeamId(getState());
+    // Wrangler commands must run in the channel that holds the post, which is not
+    // necessarily the open channel; views such as Threads have no current channel.
+    clientExecuteCommand = async (getState: GetStateFunc, command: string, postID: string) => {
+        const state = getState();
+        const post = getPost(state, postID);
+        const channel = (post && getChannel(state, post.channel_id)) || getCurrentChannel(state);
+
+        if (!channel) {
+            console.error(`Wrangler: unable to find the channel to run "${command}" in`); //eslint-disable-line no-console
+            return;
+        }
 
         const args = {
-            channel_id: currentChannel.id,
-            team_id: currentTeamId,
+            channel_id: channel.id,
+
+            // DM and GM channels have no team.
+            team_id: channel.team_id || getCurrentTeamId(state),
         };
 
         try {
