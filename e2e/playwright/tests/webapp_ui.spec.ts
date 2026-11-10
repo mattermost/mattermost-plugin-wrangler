@@ -134,6 +134,8 @@ test.describe('Webapp UI', () => {
             // # Open the move modal from the thread root's Message actions menu
             await threads.openPostActions(root.id);
             await threads.menuItem('Move/Copy Thread').click();
+
+            // * Verify the move modal opens for the thread
             await expect(threads.modal.heading).toHaveText('Wrangler - Move Thread to Another Channel');
 
             // # Move the thread to the other team's channel
@@ -148,7 +150,7 @@ test.describe('Webapp UI', () => {
         const moved = await findPostByMessage(s.admin, s.fx.teamBChannel.id, root.message);
         expect(moved).toBeDefined();
         const messages = await getThreadMessages(s.admin, moved!.id);
-        expect(messages?.slice(0, 2)).toEqual(posts.map((p) => p.message));
+        expect(messages?.slice(0, posts.length)).toEqual(posts.map((p) => p.message));
     });
 
     /**
