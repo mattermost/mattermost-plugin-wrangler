@@ -9,7 +9,7 @@ import {loginFixtureUser} from '../support/fixtures';
 import {getUserPluginSettings, withSettings} from '../support/plugin';
 import {loadSuite} from '../support/suite';
 import type {Suite} from '../support/suite';
-import {openChannel} from '../support/ui';
+import {openChannel, openThreadInThreadsView} from '../support/ui';
 
 let s: Suite;
 
@@ -116,6 +116,39 @@ test.describe('Webapp UI', () => {
         const moved = await findPostByMessage(s.admin, s.fx.target.id, root.message);
         expect(moved).toBeDefined();
         expect((await getThreadMessages(s.admin, moved!.id))?.length).toBeGreaterThanOrEqual(2);
+    });
+
+    /**
+     * @objective Verify a thread opened in the global Threads view can be moved to a channel in another team
+     *
+     * @precondition
+     * Web UI and moving threads to another team are enabled
+     */
+    test('moves a thread to another team from the Threads view', {tag: '@wrangler_ui'}, async ({pw}) => {
+        const {root, posts} = await createThread(s.admin, s.fx.source.id, 1, 'ui-move-threads-view');
+
+        await withSettings(s.admin, {enablewebui: true, movethreadtoanotherteamenable: true}, async () => {
+            // # Open the thread in the Threads view, which has no current channel
+            const threads = await openThreadInThreadsView(pw, s, root.id);
+
+            // # Open the move modal from the thread root's Message actions menu
+            await threads.openPostActions(root.id);
+            await threads.menuItem('Move/Copy Thread').click();
+            await expect(threads.modal.heading).toHaveText('Wrangler - Move Thread to Another Channel');
+
+            // # Move the thread to the other team's channel
+            await threads.modal.submitTo(s.fx.teamB.display_name, s.fx.teamBChannel.id);
+
+            // * Verify the modal closes
+            await threads.modal.toBeHidden();
+        });
+
+        // * Verify the thread and its reply now live in the other team's channel
+        await expect.poll(() => isPostDeleted(s.admin, root.id)).toBe(true);
+        const moved = await findPostByMessage(s.admin, s.fx.teamBChannel.id, root.message);
+        expect(moved).toBeDefined();
+        const messages = await getThreadMessages(s.admin, moved!.id);
+        expect(messages?.slice(0, 2)).toEqual(posts.map((p) => p.message));
     });
 
     /**
