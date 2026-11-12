@@ -167,7 +167,7 @@ export function getChannelsForTeam(teamID: string): Function {
 export function moveThread(postID: string, channelID: string, showRootMessage: boolean, silent: boolean): ActionFunc {
     return async (dispatch: DispatchFunc, getState: GetStateFunc) => {
         const command = `/wrangler move thread ${postID} ${channelID} --show-root-message-in-summary=${showRootMessage} --silent=${silent}`;
-        await Client.clientExecuteCommand(getState, command);
+        await Client.clientExecuteCommand(getState, command, postID);
 
         return {data: null};
     };
@@ -176,7 +176,7 @@ export function moveThread(postID: string, channelID: string, showRootMessage: b
 export function copyThread(postID: string, channelID: string): ActionFunc {
     return async (dispatch: DispatchFunc, getState: GetStateFunc) => {
         const command = `/wrangler copy thread ${postID} ${channelID}`;
-        await Client.clientExecuteCommand(getState, command);
+        await Client.clientExecuteCommand(getState, command, postID);
 
         return {data: null};
     };
@@ -185,7 +185,7 @@ export function copyThread(postID: string, channelID: string): ActionFunc {
 export function attachMessage(postToBeAttachedID: string, postToAttachToID: string): ActionFunc {
     return async (dispatch: DispatchFunc, getState: GetStateFunc) => {
         const command = `/wrangler attach message ${postToBeAttachedID} ${postToAttachToID}`;
-        await Client.clientExecuteCommand(getState, command);
+        await Client.clientExecuteCommand(getState, command, postToBeAttachedID);
 
         return {data: null};
     };
@@ -194,7 +194,7 @@ export function attachMessage(postToBeAttachedID: string, postToAttachToID: stri
 export function mergeThread(postToBeMergedID: string, postToMergeToID: string): ActionFunc {
     return async (dispatch: DispatchFunc, getState: GetStateFunc) => {
         const command = `/wrangler merge thread ${postToBeMergedID} ${postToMergeToID}`;
-        await Client.clientExecuteCommand(getState, command);
+        await Client.clientExecuteCommand(getState, command, postToMergeToID);
 
         return {data: null};
     };

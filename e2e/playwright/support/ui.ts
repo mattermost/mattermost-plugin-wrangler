@@ -1,7 +1,7 @@
 // Copyright (c) 2025-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import {expect} from '@mattermost/playwright-lib';
+import {ChannelsPost, expect} from '@mattermost/playwright-lib';
 import type {ChannelsPage, PlaywrightExtended} from '@mattermost/playwright-lib';
 import type {Locator, Page} from '@playwright/test';
 
@@ -61,16 +61,12 @@ export class WranglerModeBanner {
     }
 }
 
-// Wrangler entry points layered on the library's ChannelsPage.
-export class WranglerChannel {
-    readonly page: Page;
+// Wrangler post menu and modal, shared by every view that renders posts.
+class WranglerView {
     readonly modal: MoveThreadModal;
-    readonly banner: WranglerModeBanner;
 
-    constructor(readonly channelsPage: ChannelsPage) {
-        this.page = channelsPage.page;
-        this.modal = new MoveThreadModal(this.page);
-        this.banner = new WranglerModeBanner(this.page);
+    constructor(readonly page: Page) {
+        this.modal = new MoveThreadModal(page);
     }
 
     menuItem(name: string | RegExp) {
@@ -78,11 +74,24 @@ export class WranglerChannel {
     }
 
     // Plugin post menu items live in the "Message actions" menu, not the dot menu.
-    async openPostActions(postId: string) {
-        const post = await this.channelsPage.centerView.getPostById(postId);
+    protected async openActionsFor(post: ChannelsPost) {
         await post.toBeVisible();
         await post.hover();
         await post.postMenu.actionsButton.click();
+    }
+}
+
+// Wrangler entry points layered on the library's ChannelsPage.
+export class WranglerChannel extends WranglerView {
+    readonly banner: WranglerModeBanner;
+
+    constructor(readonly channelsPage: ChannelsPage) {
+        super(channelsPage.page);
+        this.banner = new WranglerModeBanner(this.page);
+    }
+
+    async openPostActions(postId: string) {
+        await this.openActionsFor(await this.channelsPage.centerView.getPostById(postId));
     }
 
     async openChannelMenu() {
@@ -106,4 +115,19 @@ export async function openChannel(pw: PlaywrightExtended, s: Suite, channelName:
     await channelsPage.goto(s.fx.teamA.name, channelName);
     await channelsPage.toBeVisible();
     return new WranglerChannel(channelsPage);
+}
+
+// Global Threads view, which has no current channel while a thread is shown.
+export class WranglerThreadsView extends WranglerView {
+    async openPostActions(postId: string) {
+        await this.openActionsFor(new ChannelsPost(this.page.locator(`[id="rhsPost_${postId}"]`)));
+    }
+}
+
+export async function openThreadInThreadsView(pw: PlaywrightExtended, s: Suite, rootId: string) {
+    const {page, threadsPage} = await pw.testBrowser.login(s.adminUser);
+    await page.goto(`/${s.fx.teamA.name}/threads/${rootId}`);
+    await threadsPage.toBeVisible();
+    await threadsPage.toHaveThreadSelected();
+    return new WranglerThreadsView(page);
 }
